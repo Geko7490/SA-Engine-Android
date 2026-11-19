@@ -72,6 +72,37 @@ def patch_textures(root: Path) -> str:
     src.write_text(text, encoding="utf-8", newline="\n")
     return "patched"
 
+
+LOADER_PATH = "string path = Config.GetPath(Config.const_game_dir);"
+LOADER_ANDROID_PATH = """string path = Config.GetPath(Config.const_game_dir);
+
+            // Android: load legally owned GTA SA files from the app's own storage.
+            // The standard desktop folder browser cannot reliably access scoped storage.
+            if (Application.platform == RuntimePlatform.Android && string.IsNullOrEmpty(path))
+            {
+                string localFolder = Path.Combine(Application.persistentDataPath, "GTASA");
+                string pathError;
+                if (IsGamePathCorrect(localFolder, out pathError))
+                {
+                    Config.SetString(Config.const_game_dir, localFolder);
+                    Config.SaveUserConfigSafe();
+                    path = localFolder;
+                }
+            }"""
+
+def patch_loader(root: Path) -> str:
+    src = root / "Assets/Scripts/Behaviours/Loader.cs"
+    if not src.is_file():
+        raise FileNotFoundError(f"Missing upstream Loader source: {src}")
+    content = src.read_text(encoding="utf-8-sig").replace("\r\n", "\n")
+    if content.count(LOADER_ANDROID_PATH) == 1:
+        return "already-patched"
+    if content.count(LOADER_PATH) != 1:
+        raise RuntimeError("Loader path selection changed upstream; refusing blind patch")
+    content = content.replace(LOADER_PATH, LOADER_ANDROID_PATH, 1)
+    src.write_text(content, encoding="utf-8", newline="\n")
+    return "patched"
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("project", type=Path)
@@ -79,6 +110,7 @@ def main() -> int:
     try:
         print("Android FPS patch:", patch_project(args.project))
         print("Android DXT patch:", patch_textures(args.project))
+        print("Android game data path patch:", patch_loader(args.project))
     except (FileNotFoundError, RuntimeError) as exc:
         print("ERROR:", exc, file=sys.stderr)
         return 1

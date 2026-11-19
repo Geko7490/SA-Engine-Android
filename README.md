@@ -24,3 +24,14 @@ No Rockstar game files are included. Users must supply legally obtained game dat
 - [ ] Playable APK
 
 This README is a planning baseline, **not a completed game port**.
+
+## Current Android direction (Unity baseline)
+
+Because the upstream Rust `sa-engine` is unlicensed and has fundamental 32-bit address-layout assumptions, this repository is currently evaluating the MIT-licensed [SanAndreasUnity](https://github.com/in0finite/SanAndreasUnity) Android implementation as a performance baseline. The Rust port option remains on hold pending permission and architecture work.
+
+- [Android integration and build guide](docs/ANDROID_BUILD.md)
+- [Profiler and performance criteria](docs/UNITY_ANDROID_BASELINE.md)
+- [Unity Android performance overlay](UnityPort/Assets/Scripts/Performance/)
+- [Android IL2CPP ARM64 build entry point](UnityPort/Assets/Editor/SAAndroidBuild.cs)
+
+**No playable APK is available yet.** Android runtime compatibility and performance have not been tested in an actual Unity project build.

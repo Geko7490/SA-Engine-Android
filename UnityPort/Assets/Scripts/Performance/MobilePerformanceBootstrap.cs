@@ -14,6 +14,7 @@ namespace SAEngineAndroid.Performance
             UnityEngine.Object.DontDestroyOnLoad(host);
             host.AddComponent<MobilePerformanceGovernor>();
             host.AddComponent<MobileWorldTuner>();
+            host.AddComponent<MobileBenchmarkRecorder>();
             host.AddComponent<MobilePerformancePanel>();
 #endif
         }

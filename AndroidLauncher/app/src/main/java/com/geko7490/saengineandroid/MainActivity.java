@@ -44,6 +44,8 @@ public final class MainActivity extends Activity {
 
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
     private final List<Button> inputButtons = new ArrayList<>();
+    private final List<Button> fpsButtons = new ArrayList<>();
+    private final List<Button> qualityButtons = new ArrayList<>();
     private LinearLayout content;
     private TextView status;
     private TextView importText;
@@ -100,20 +102,20 @@ public final class MainActivity extends Activity {
         LinearLayout fpsRow = row(performance);
         for (int number : new int[]{30, 60, 90, 120}) {
             final int selected = number;
-            button(fpsRow, String.valueOf(number), number == fps, () -> {
+            fpsButtons.add(button(fpsRow, String.valueOf(number), number == fps, () -> {
                 fps = selected;
                 persistSettings();
-            });
+            }));
         }
         label(performance, "Grafik kalitesi", 12, MUTED, true);
         LinearLayout qualityRow = row(performance);
         String[] labels = {"DÜŞÜK", "ORTA", "YÜKSEK"};
         for (int i = 0; i < labels.length; i++) {
             final int selected = i;
-            button(qualityRow, labels[i], i == quality, () -> {
+            qualityButtons.add(button(qualityRow, labels[i], i == quality, () -> {
                 quality = selected;
                 persistSettings();
-            });
+            }));
         }
         label(performance, "Ayarlar gelecekte Unity motoru tarafından okunacak. Bu APK oyun içi FPS testi yapmaz.", 12, MUTED, false);
 
@@ -218,9 +220,15 @@ public final class MainActivity extends Activity {
     }
 
     private void recreateChoices() {
-        // Rebuild button highlights after a setting change without interrupting an import.
-        LinearLayout fpsRow = null, qualityRow = null;
-        // The next onCreate will use stored choices; the current selected choice is shown in the summary.
+        int[] modes = {30, 60, 90, 120};
+        for (int i = 0; i < fpsButtons.size(); i++) {
+            boolean selected = modes[i] == fps;
+            fpsButtons.get(i).setBackground(box(selected ? PURPLE : Color.rgb(49, 40, 66), 0, 0));
+        }
+        for (int i = 0; i < qualityButtons.size(); i++) {
+            boolean selected = i == quality;
+            qualityButtons.get(i).setBackground(box(selected ? PURPLE : Color.rgb(49, 40, 66), 0, 0));
+        }
     }
 
     private void saveSettingsForUnity() {

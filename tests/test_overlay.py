@@ -42,6 +42,8 @@ class AndroidOverlayTests(unittest.TestCase):
         self.assertIn("MobileWorldTuner", bootstrap)
         self.assertIn("MobilePerformancePanel", bootstrap)
         self.assertIn("MobileBenchmarkRecorder", bootstrap)
+        bridge = (base / "Scripts/Performance/GameDataBridge.cs").read_text()
+        self.assertIn("GameDataReceiver", bridge)
         tuner = (base / "Scripts/Performance/MobileWorldTuner.cs").read_text()
         self.assertIn("WorldManager.Singleton", tuner)
         self.assertIn("maxTimeToUpdatePerFrameMs", tuner)
@@ -69,10 +71,11 @@ class AndroidOverlayTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             path = Path(temp) / "Assets/Scripts/Behaviours/Loader.cs"
             path.parent.mkdir(parents=True)
-            path.write_text("class Loader {\\n" + patcher.LOADER_PATH + "\\n}", encoding="utf-8")
+            path.write_text(patcher.LOADER_CORO + "\\n" + patcher.LOADER_PATH + "\\n}", encoding="utf-8")
             self.assertEqual(patcher.patch_loader(Path(temp)), "patched")
             updated = path.read_text()
             self.assertIn(patcher.LOADER_ANDROID_PATH, updated)
+            self.assertIn(patcher.LOADER_BRIDGE, updated)
             self.assertEqual(patcher.patch_loader(Path(temp)), "already-patched")
 
     def test_preparation_script_contains_safe_patch(self):
@@ -83,6 +86,8 @@ class AndroidOverlayTests(unittest.TestCase):
         self.assertIn("MobileWorldTuner.cs", text)
         self.assertIn("MobilePerformancePanel.cs", text)
         self.assertIn("MobileBenchmarkRecorder.cs", text)
+        self.assertIn("GameDataBridge.cs", text)
+        self.assertIn("SAEngineBridge.androidlib", text)
         decoder = (ROOT / "UnityPort/Assets/Scripts/Importing/Conversion/MobileDxtDecoder.cs").read_text()
         self.assertIn("DecodeDxt1", decoder)
         self.assertIn("DecodeDxt3", decoder)

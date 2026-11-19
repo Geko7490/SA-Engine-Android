@@ -1,6 +1,8 @@
-# SA Engine Android — Mobile performance port
+# SA Engine Android — Mobile launcher and Unity engine port
 
-**Status: Android integration code and CI preflight are implemented. A playable APK is not built or verified yet.**
+**Status (2026-11-19): V0.5 Android launcher APK is available. V0.6 playable Unity GTA SA game APK is not yet built; Unity activation credentials are missing.**
+
+[Download launcher APK](https://github.com/Geko7490/SA-Engine-Android/releases/tag/launcher-dev) · [V0.2–V0.6 status and usage](docs/V0.2-V0.6_STATUS.md) · [GitHub Actions](https://github.com/Geko7490/SA-Engine-Android/actions)
 
 This project is an experimental performance-oriented Android port overlay for the MIT-licensed [SanAndreasUnity](https://github.com/in0finite/SanAndreasUnity). It is not a complete GTA San Andreas redistribution or a new standalone Rust game engine.
 

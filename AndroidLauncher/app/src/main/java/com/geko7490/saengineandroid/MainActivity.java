@@ -94,7 +94,7 @@ public final class MainActivity extends Activity {
         LinearLayout originalGameCard = card();
         label(originalGameCard, "ORİJİNAL GTA SA ANDROID", 14, PURPLE, true);
         officialGameState = label(originalGameCard, "Oyun kontrol ediliyor...", 16, TEXT, true);
-        label(originalGameCard, "Unity gerekmez. Sahip olduğun GTA SA Android 2.10 ARM64, AML ve SAUtils ile FPS modunu kurup çalıştırabilirsin. Sıradan resmi APK, AML modlarını kendiliğinden yüklemez.", 13, MUTED, false);
+        label(originalGameCard, "GTA SA 2.11.311 için Mod Center ve Shizuku/ADB erişim testini kullan. AML/FPS modları stok 2.11.311'de doğrulanmadı.", 13, MUTED, false);
         action(originalGameCard, "NATIVE 30 / 60 / 90 / 120 FPS MODU", () ->
                 startActivity(new Intent(this, PackageCenterActivity.class)), false);
         officialLaunch = action(originalGameCard, "GTA SA ANDROID'İ AÇ", this::launchOfficialGta, true);
@@ -135,7 +135,7 @@ public final class MainActivity extends Activity {
                 persistSettings();
             }));
         }
-        label(performance, "AML FPS modunu kurduysan seçtiğin değer modun ayar dosyasına yazılır ve GTA SA yeniden başlatılınca uygulanması hedeflenir. Mod yoksa bu ayar resmi oyunun FPS sınırını değiştirmez.", 12, MUTED, false);
+        label(performance, "Bu değerler launcher tercihidir. Yalnızca uygun AML mod yüklüyse FPS ayarı ona aktarılır; standart GTA SA 2.11.311'in grafik kalitesini veya FPS'sini doğrudan değiştirmez.", 12, MUTED, false);
 
         space(12);
         LinearLayout info = card();

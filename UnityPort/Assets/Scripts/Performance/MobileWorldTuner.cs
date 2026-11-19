@@ -84,6 +84,16 @@ namespace SAEngineAndroid.Performance
         private void Update()
         {
             if (!Loader.HasLoaded) return;
+            // The upstream Cell can spend up to 10ms updating map areas in one frame.
+            // Scale this CPU budget with the requested FPS, accepting possible extra pop-in.
+            var cell = Cell.Instance;
+            if (cell != null)
+            {
+                float frameMs = 1000f / Mathf.Max(30, Application.targetFrameRate);
+                ushort areaBudgetMs = (ushort)Mathf.Clamp(frameMs * 0.33f, 3f, 7f);
+                if (cell.maxTimeToUpdatePerFrameMs != areaBudgetMs)
+                    cell.maxTimeToUpdatePerFrameMs = areaBudgetMs;
+            }
             var world = WorldManager.Singleton;
             if (world == null) return;
 

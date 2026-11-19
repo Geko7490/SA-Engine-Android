@@ -30,18 +30,18 @@ public final class ResumableDownloader {
         File dir = new File(context.getCacheDir(), "engine-downloads");
         if (!dir.isDirectory() && !dir.mkdirs())
             throw new IOException("İndirme klasörü oluşturulamadı");
-        return new File(dir, entry.id + "-" + entry.digest + ".apk");
+        return new File(dir, entry.id + "-" + entry.digest + (entry.isFpsPlugin() ? ".so" : ".apk"));
     }
 
     public File download(ReleaseCatalog.PackageEntry entry, String token, Listener listener) throws Exception {
         cancel.set(false);
         if (entry.size <= 0 || entry.size > MAX_APK_BYTES)
-            throw new IOException("APK boyutu sınır dışında");
+            throw new IOException("İndirme boyutu sınır dışında");
         File destination = cachedFile(entry);
         if (destination.isFile()) {
             if (destination.length() == entry.size && sha256(destination).equalsIgnoreCase(entry.digest))
                 return destination;
-            if (!destination.delete()) throw new IOException("Eski APK temizlenemedi");
+            if (!destination.delete()) throw new IOException("Eski paket temizlenemedi");
         }
         File partial = new File(destination.getParentFile(), destination.getName() + ".part");
         long from = partial.isFile() ? partial.length() : 0;

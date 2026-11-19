@@ -1,0 +1,91 @@
+name: V0.6 Unity Game APK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'UnityPort/**'
+      - 'scripts/**'
+      - 'upstream.lock'
+      - '.github/workflows/unity-game-apk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sa-game-unity-apk
+  cancel-in-progress: true
+
+jobs:
+  activation-gate:
+    runs-on: ubuntu-latest
+    outputs:
+      can-build: ${{ steps.activation.outputs.ready }}
+    steps:
+      - name: Check Unity licensing without exposing credentials
+        id: activation
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        run: |
+          if [ -n "$UNITY_LICENSE" ] || { [ -n "$UNITY_EMAIL" ] && [ -n "$UNITY_PASSWORD" ]; }; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+            echo "Unity activation credentials configured. APK build enabled." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "Unity activation credentials are not configured. The genuine game APK cannot be compiled yet." >> "$GITHUB_STEP_SUMMARY"
+            echo "Add UNITY_LICENSE or UNITY_EMAIL + UNITY_PASSWORD to repository Actions Secrets." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  game-apk:
+    if: ${{ needs.activation-gate.outputs.can-build == 'true' }}
+    needs: activation-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout Android overlay
+        uses: actions/checkout@v4
+
+      - name: Download pinned upstream SanAndreasUnity and submodules
+        run: bash scripts/checkout-upstream.sh SanAndreasUnity
+
+      - name: Apply Android engine and game-data bridge integration
+        run: bash scripts/prepare-unity-port.sh SanAndreasUnity
+
+      - name: Build genuine ARM64 Android Unity game APK
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: SanAndreasUnity
+          unityVersion: 2020.3.26f1
+          targetPlatform: Android
+          buildMethod: SAAndroidBuild.BuildArm64
+          versioning: None
+
+      - name: Confirm actual game APK exists
+        run: |
+          set -euo pipefail
+          apk=SanAndreasUnity/Builds/SAEngineAndroid-dev.apk
+          test -s "$apk"
+          sha256sum "$apk"
+          ls -lh "$apk"
+
+      - name: Publish game APK to private GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          file=SanAndreasUnity/Builds/SAEngineAndroid-dev.apk
+          asset="$file#SAEngineGame-0.6-dev.apk"
+          notes="Experimental Unity Android gameplay engine. minAndroidApi=26. Requires users' own PC GTA SA game files. NOT device-tested. Pre-release build $GITHUB_SHA. Development signing: stable signing cert required for updates."
+          if gh release view engine-dev --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            gh release upload engine-dev "$asset" --clobber --repo "$GITHUB_REPOSITORY"
+            gh release edit engine-dev --repo "$GITHUB_REPOSITORY" --notes "$notes"
+          else
+            gh release create engine-dev "$asset" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --title "SA Engine Game — Android V0.6 dev" --notes "$notes"
+          fi

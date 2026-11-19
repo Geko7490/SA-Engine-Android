@@ -19,6 +19,7 @@
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/apk_file_paths"/>
         </provider>
+        <activity android:name=".PackageCenterActivity" android:exported="false"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"

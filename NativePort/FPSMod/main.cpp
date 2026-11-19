@@ -23,7 +23,7 @@ namespace {
     constexpr uintptr_t kLimitSite2 = 0x70A458;
     constexpr uint32_t kStockMoveW9 = 0x321E0FE9u;
     constexpr int kCaps[] = { 30, 60, 90, 120 };
-    constexpr const char* kCapsText[] = { "30 FPS", "60 FPS", "90 FPS", "120 FPS" };
+    const char* kCapsText[] = { "30 FPS", "60 FPS", "90 FPS", "120 FPS" };
     uintptr_t gameBase = 0;
     bool validated = false;
     bool ready = false;
@@ -37,7 +37,7 @@ namespace {
     }
 
     bool validateGame() {
-        if (gameBase == 0) return false;
+        if (gameBase == 0 || aml->GetLibLength("libGTASA.so") < kLimitSite2 + 4) return false;
         uint32_t first = *reinterpret_cast<volatile uint32_t*>(gameBase + kLimitSite1);
         uint32_t second = *reinterpret_cast<volatile uint32_t*>(gameBase + kLimitSite2);
         if (!isSupported(first) || !isSupported(second)) {

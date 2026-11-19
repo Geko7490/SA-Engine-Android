@@ -11,6 +11,7 @@ namespace SAEngineAndroid.Performance
     {
         private MobilePerformanceGovernor governor;
         private MobileWorldTuner worldTuner;
+        private MobileBenchmarkRecorder recorder;
         private bool expanded;
         private float nextTextTime;
         private string frameText = "FPS: --";
@@ -19,6 +20,7 @@ namespace SAEngineAndroid.Performance
         {
             governor = GetComponent<MobilePerformanceGovernor>();
             worldTuner = GetComponent<MobileWorldTuner>();
+            recorder = GetComponent<MobileBenchmarkRecorder>();
         }
 
         private void Update()
@@ -47,7 +49,7 @@ namespace SAEngineAndroid.Performance
                     return;
                 }
 
-                Rect bounds = new Rect(Mathf.Max(0f, right - 290f), top, 285f, 212f);
+                Rect bounds = new Rect(Mathf.Max(0f, right - 290f), top, 285f, 278f);
                 GUILayout.BeginArea(bounds, GUI.skin.box);
                 GUILayout.BeginHorizontal();
                 GUILayout.Label("PERFORMANCE");
@@ -67,6 +69,15 @@ namespace SAEngineAndroid.Performance
                 if (GUILayout.Button("MED", GUILayout.Height(38f))) worldTuner.ApplyProfile(1);
                 if (GUILayout.Button("HIGH", GUILayout.Height(38f))) worldTuner.ApplyProfile(2);
                 GUILayout.EndHorizontal();
+                if (recorder != null)
+                {
+                    if (recorder.IsRecording)
+                        GUILayout.Label("REC: " + recorder.RemainingSeconds.ToString("F0") + " s remaining");
+                    else if (GUILayout.Button("BENCHMARK 60s", GUILayout.Height(36f)))
+                        recorder.StartRecording();
+                    if (!string.IsNullOrEmpty(recorder.LastResultFilename))
+                        GUILayout.Label("Result: " + recorder.LastResultFilename);
+                }
                 GUILayout.Label("Display refresh and device limits still apply.");
                 GUILayout.EndArea();
             }

@@ -1,37 +1,44 @@
-# SA Engine Android — port workspace
+# SA Engine Android — Mobile performance port
 
-Experimental Android ARM64 port workspace for studying a GTA San Andreas-compatible Rust engine.
+**Status: Android integration code and CI preflight are implemented. A playable APK is not built or verified yet.**
 
-## Important: upstream code and licensing
-The upstream [ghosty2004/sa-engine](https://github.com/ghosty2004/sa-engine) workspace declares `license = "UNLICENSED"` and has no root LICENSE file as checked on 2026-11-19. **Do not copy or redistribute upstream source here without obtaining permission or a suitable license from its author.** This repository currently contains only independently written port scaffolding and planning.
+This project is an experimental performance-oriented Android port overlay for the MIT-licensed [SanAndreasUnity](https://github.com/in0finite/SanAndreasUnity). It is not a complete GTA San Andreas redistribution or a new standalone Rust game engine.
 
-No Rockstar game files are included. Users must supply legally obtained game data. This project is unofficial and not endorsed by Rockstar Games.
+## Implemented
+- Android ARM64 / IL2CPP Unity 2020.3.26f1 build script and GitHub Actions pipeline.
+- Pinned upstream checkout with Git submodules; guarded, repeatable upstream compatibility patches.
+- Fix the upstream 25 FPS mobile override; persistent 30/60/90/120 FPS target selection.
+- LOW/MED/HIGH graphics profiles, adaptive draw distance and per-frame world-cell update budget.
+- Optional DXT1/DXT3 software fallback on Android GPUs lacking required compressed-texture support.
+- Development-only touch panel and 60-second frame-time CSV benchmark recorder.
+- Android game directory auto-detection for the user's own PC GTA SA files under `Application.persistentDataPath/GTASA`.
+- GitHub Actions source preflight: Python integration tests and actual C# compilation against minimal Unity API stubs; known DXT pixel/bounds test cases.
 
-## Initial Android plan
-1. Obtain upstream author's permission/license to modify and redistribute source.
-2. Audit 32-bit legacy address assumptions before ARM64 porting; replace fixed-address mappings with portable handles or an emulated 32-bit memory arena where feasible.
-3. Implement Android activity/window lifecycle, JNI entry points, asset access via Storage Access Framework, and touch input.
-4. Integrate wgpu Vulkan surface and Android audio backend.
-5. Test a minimal renderer on arm64-v8a before integrating gameplay.
-6. Add CI build for an Android native library, then an APK packaging step once the application host exists.
+## Get started
 
-## Current status
-- [x] Repository initialized
-- [x] Upstream architecture and license blocker identified
-- [ ] Upstream redistribution permission
-- [ ] Android native renderer
-- [ ] Game runtime port
-- [ ] Playable APK
+**Source preflight:** Push to `main` triggers the [Android Unity Port workflow](.github/workflows/android-unity.yml) with `build_apk=false` behaviour. Source checks are automated and do not require a Unity license.
 
-This README is a planning baseline, **not a completed game port**.
+**APK attempt:** Use GitHub Actions → Android Unity Port → Run workflow → `build_apk=true`. This uses GameCI, which requires the repository owner to configure Unity activation credentials as Actions secrets, plus working Android tooling. The CI attempt may still uncover actual Unity compilation errors.
 
-## Current Android direction (Unity baseline)
+**Manual preparation:**
+```bash
+bash scripts/checkout-upstream.sh SanAndreasUnity
+bash scripts/prepare-unity-port.sh SanAndreasUnity
+```
+Then open `SanAndreasUnity` with Unity 2020.3.26f1 and invoke `SAAndroidBuild.BuildArm64` with Android Build Support installed.
 
-Because the upstream Rust `sa-engine` is unlicensed and has fundamental 32-bit address-layout assumptions, this repository is currently evaluating the MIT-licensed [SanAndreasUnity](https://github.com/in0finite/SanAndreasUnity) Android implementation as a performance baseline. The Rust port option remains on hold pending permission and architecture work.
+For Android file placement, device benchmarking, limits, and planned HD graphics packs, read [Device & Benchmark](docs/DEVICE_AND_BENCHMARK.md). For more detail, see [Build Guide](docs/ANDROID_BUILD.md) and [CI Notes](docs/GITHUB_ACTIONS.md).
 
-- [Android integration and build guide](docs/ANDROID_BUILD.md)
-- [Profiler and performance criteria](docs/UNITY_ANDROID_BASELINE.md)
-- [Unity Android performance overlay](UnityPort/Assets/Scripts/Performance/)
-- [Android IL2CPP ARM64 build entry point](UnityPort/Assets/Editor/SAAndroidBuild.cs)
+## Legal
+No Rockstar or Take-Two game data is shipped. A legally obtained GTA San Andreas PC installation is required for gameplay. This project is unofficial and not affiliated with Rockstar Games.
 
-**No playable APK is available yet.** Android runtime compatibility and performance have not been tested in an actual Unity project build.
+The original code in this repository is MIT licensed (see LICENSE). Upstream SanAndreasUnity is MIT-licensed and retains its own copyright notice. Git submodules must comply with their own licenses. A previous, separate Rust candidate `ghosty2004/sa-engine` declares itself `UNLICENSED`, so its code has not been imported here.
+
+## Not yet implemented or proven
+- No Unity Android build completed; no installable APK validated.
+- No device FPS, thermal, loading-time or memory benchmark measured.
+- No modern Android Storage Access Framework game-folder/ZIP importer yet.
+- No HD graphics pack loader, texture streaming allocator, or Vulkan-specific optimization.
+- Touch controls are provided by the existing SanAndreasUnity project, not rewritten by this overlay.
+
+Next engineering step: compile the real Unity project, resolve any Android plug-in/SDK errors, install on device, and compare repeatable in-game 60-second baseline measurements before claiming any performance gain.

@@ -19,6 +19,8 @@ fi
 mkdir -p "$PROJECT/Assets/Scripts/Performance" "$PROJECT/Assets/Editor" "$PROJECT/Assets/Scripts/Importing/Conversion"
 cp "$ROOT/UnityPort/Assets/Scripts/Performance/MobilePerformanceGovernor.cs" "$PROJECT/Assets/Scripts/Performance/"
 cp "$ROOT/UnityPort/Assets/Scripts/Performance/MobilePerformanceBootstrap.cs" "$PROJECT/Assets/Scripts/Performance/"
+cp "$ROOT/UnityPort/Assets/Scripts/Performance/MobileWorldTuner.cs" "$PROJECT/Assets/Scripts/Performance/"
+cp "$ROOT/UnityPort/Assets/Scripts/Performance/MobilePerformancePanel.cs" "$PROJECT/Assets/Scripts/Performance/"
 cp "$ROOT/UnityPort/Assets/Editor/SAAndroidBuild.cs" "$PROJECT/Assets/Editor/"
 cp "$ROOT/UnityPort/Assets/Scripts/Importing/Conversion/MobileDxtDecoder.cs" "$PROJECT/Assets/Scripts/Importing/Conversion/"
 python3 "$ROOT/scripts/patch_upstream.py" "$PROJECT"

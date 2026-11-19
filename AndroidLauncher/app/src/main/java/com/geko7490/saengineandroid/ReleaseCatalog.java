@@ -69,44 +69,49 @@ public final class ReleaseCatalog {
                 bytes = out.toByteArray();
             }
             JSONArray releases = new JSONArray(new String(bytes, StandardCharsets.UTF_8));
-            List<PackageEntry> results = new ArrayList<>();
-            for (int i = 0; i < releases.length(); i++) {
-                JSONObject release = releases.getJSONObject(i);
-                if (release.optBoolean("draft")) continue;
-                String tag = release.optString("tag_name", "");
-                String notes = release.optString("body", "");
-                int minAndroid = 0;
-                // Only explicit metadata is displayed; never invent compatibility.
-                java.util.regex.Matcher m = java.util.regex.Pattern.compile("minAndroidApi=(\\d+)").matcher(notes);
-                if (m.find()) {
-                    try { minAndroid = Integer.parseInt(m.group(1)); } catch (NumberFormatException ignored) { }
-                }
-                JSONArray assets = release.optJSONArray("assets");
-                if (assets == null) continue;
-                for (int a = 0; a < assets.length(); a++) {
-                    JSONObject asset = assets.getJSONObject(a);
-                    String name = asset.optString("name", "");
-                    String kind;
-                    if (name.startsWith("SAEngineGame-") && name.endsWith(".apk")) kind = "engine";
-                    else if (tag.equals("launcher-dev") && (name.equals("app-debug.apk") ||
-                            name.equals("SAEngineMobile-Launcher-debug.apk"))) kind = "launcher-preview";
-                    else continue;
-                    String digest = asset.optString("digest", "");
-                    if (!digest.matches("sha256:[0-9a-fA-F]{64}")) continue;
-                    long id = asset.optLong("id", 0);
-                    long size = asset.optLong("size", 0);
-                    String apiUrl = asset.optString("url", "");
-                    if (id <= 0 || size <= 0 || !apiUrl.equals(API + "/releases/assets/" + id))
-                        continue;
-                    results.add(new PackageEntry(tag, name, notes, kind,
-                            digest.substring(7).toLowerCase(Locale.ROOT), apiUrl,
-                            id, size, minAndroid, release.optBoolean("prerelease")));
-                }
-            }
-            return results;
+            return parseReleases(releases);
         } finally {
             connection.disconnect();
         }
+    }
+
+    /** Parse an offline fixture or GitHub API response without any network calls. */
+    public static List<PackageEntry> parseReleases(JSONArray releases) throws JSONException {
+        List<PackageEntry> results = new ArrayList<>();
+                    for (int i = 0; i < releases.length(); i++) {
+                        JSONObject release = releases.getJSONObject(i);
+                        if (release.optBoolean("draft")) continue;
+                        String tag = release.optString("tag_name", "");
+                        String notes = release.optString("body", "");
+                        int minAndroid = 0;
+                        // Only explicit metadata is displayed; never invent compatibility.
+                        java.util.regex.Matcher m = java.util.regex.Pattern.compile("minAndroidApi=(\\d+)").matcher(notes);
+                        if (m.find()) {
+                            try { minAndroid = Integer.parseInt(m.group(1)); } catch (NumberFormatException ignored) { }
+                        }
+                        JSONArray assets = release.optJSONArray("assets");
+                        if (assets == null) continue;
+                        for (int a = 0; a < assets.length(); a++) {
+                            JSONObject asset = assets.getJSONObject(a);
+                            String name = asset.optString("name", "");
+                            String kind;
+                            if (name.startsWith("SAEngineGame-") && name.endsWith(".apk")) kind = "engine";
+                            else if (tag.equals("launcher-dev") && (name.equals("app-debug.apk") ||
+                                    name.equals("SAEngineMobile-Launcher-debug.apk"))) kind = "launcher-preview";
+                            else continue;
+                            String digest = asset.optString("digest", "");
+                            if (!digest.matches("sha256:[0-9a-fA-F]{64}")) continue;
+                            long id = asset.optLong("id", 0);
+                            long size = asset.optLong("size", 0);
+                            String apiUrl = asset.optString("url", "");
+                            if (id <= 0 || size <= 0 || !apiUrl.equals(API + "/releases/assets/" + id))
+                                continue;
+                            results.add(new PackageEntry(tag, name, notes, kind,
+                                    digest.substring(7).toLowerCase(Locale.ROOT), apiUrl,
+                                    id, size, minAndroid, release.optBoolean("prerelease")));
+                        }
+                    }
+                    return results;
     }
 
     private ReleaseCatalog() { }

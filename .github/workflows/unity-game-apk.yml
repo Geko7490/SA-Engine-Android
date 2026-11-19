@@ -1,13 +1,6 @@
 name: V0.6 Unity Game APK
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'UnityPort/**'
-      - 'scripts/**'
-      - 'upstream.lock'
-      - '.github/workflows/unity-game-apk.yml'
   workflow_dispatch:
 
 permissions:

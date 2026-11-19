@@ -1,0 +1,89 @@
+name: Android Unity Port
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_apk:
+        description: 'Attempt an Android APK build (requires Unity credentials)'
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  source-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout Android overlay
+        uses: actions/checkout@v4
+
+      - name: Clone original open-source Unity project and submodules
+        run: |
+          git clone --depth 1 --branch dev https://github.com/in0finite/SanAndreasUnity.git SanAndreasUnity
+          cd SanAndreasUnity
+          git submodule update --init --recursive --depth 1
+          test -f ProjectSettings/ProjectVersion.txt
+          test -f Assets/Scenes/Startup.unity
+          test -f LICENSE
+
+      - name: Install overlay and check required files
+        run: |
+          bash scripts/prepare-unity-port.sh ./SanAndreasUnity
+          test -s SanAndreasUnity/Assets/Scripts/Performance/MobilePerformanceGovernor.cs
+          test -s SanAndreasUnity/Assets/Scripts/Performance/MobilePerformanceBootstrap.cs
+          test -s SanAndreasUnity/Assets/Editor/SAAndroidBuild.cs
+          grep -q '2020.3.26f1' SanAndreasUnity/ProjectSettings/ProjectVersion.txt
+
+  android-build:
+    if: ${{ inputs.build_apk }}
+    needs: source-preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout Android overlay
+        uses: actions/checkout@v4
+
+      - name: Clone Unity project
+        run: |
+          git clone --depth 1 --branch dev https://github.com/in0finite/SanAndreasUnity.git SanAndreasUnity
+          git -C SanAndreasUnity submodule update --init --recursive --depth 1
+
+      - name: Install Android overlay
+        run: bash scripts/prepare-unity-port.sh ./SanAndreasUnity
+
+      - name: Verify Unity credentials configured
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        run: |
+          if [ -z "$UNITY_LICENSE" ] && { [ -z "$UNITY_EMAIL" ] || [ -z "$UNITY_PASSWORD" ]; }; then
+            echo "::error::Configure UNITY_LICENSE or UNITY_EMAIL and UNITY_PASSWORD in Actions secrets."
+            exit 1
+          fi
+
+      - name: Build ARM64 development APK with Unity
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: SanAndreasUnity
+          unityVersion: 2020.3.26f1
+          targetPlatform: Android
+          buildMethod: SAAndroidBuild.BuildArm64
+          versioning: None
+
+      - name: Upload APK artifact, when generated
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: SAEngineAndroid-development-apk
+          path: |
+            SanAndreasUnity/Builds/*.apk
+            build/**/*.apk
+          if-no-files-found: error

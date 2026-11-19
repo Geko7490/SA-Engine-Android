@@ -36,8 +36,11 @@ public final class NativeFpsModInstaller {
     public static boolean isValidTreeId(String id) {
         if (id == null) return false;
         String path = id.replace('\\', '/').toLowerCase(Locale.ROOT);
-        if (!path.endsWith("/mods")) return false;
-        return path.contains("/com.rockstargames.gtasa/mods");
+        int colon = path.indexOf(':');
+        if (colon < 1) return false;
+        String relative = path.substring(colon + 1);
+        return relative.equals("android/data/com.rockstargames.gtasa/mods") ||
+                relative.equals("android_unprotected/data/com.rockstargames.gtasa/mods");
     }
 
     private static DocumentFile checkedModsDir(Context app, Uri treeUri) throws IOException {

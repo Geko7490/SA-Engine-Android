@@ -26,6 +26,19 @@ jobs:
       - name: Run local integration tests (no Unity needed)
         run: python3 -m unittest discover -s tests -v
 
+      - name: Set up .NET for the standalone DXT decoder check
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Compile and execute DXT1/DXT3 pixel tests
+        run: |
+          set -euo pipefail
+          dotnet new console --framework net8.0 --output /tmp/sa-android-dxt --no-restore
+          cp tests/DxtDecoderSmoke.cs /tmp/sa-android-dxt/Program.cs
+          cp UnityPort/Assets/Scripts/Importing/Conversion/MobileDxtDecoder.cs /tmp/sa-android-dxt/
+          dotnet run --project /tmp/sa-android-dxt --configuration Release
+
       - name: Clone pinned SanAndreasUnity and submodules
         run: bash scripts/checkout-upstream.sh SanAndreasUnity
 

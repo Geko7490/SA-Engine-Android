@@ -59,6 +59,17 @@ public class ReleaseCatalogTest {
         assertEquals(0, ReleaseCatalog.parseReleases(data).size());
     }
 
+    @Test public void nativeFpsPluginIsNotConfusedWithGameApk() throws Exception {
+        JSONArray data = new JSONArray().put(release("native-fps-dev",
+                "AML FPS mod (no game assets)",
+                asset(22, "libSAEngineFPS.so", digest())));
+        java.util.List<ReleaseCatalog.PackageEntry> items = ReleaseCatalog.parseReleases(data);
+        assertEquals(1, items.size());
+        assertTrue(items.get(0).isFpsPlugin());
+        assertFalse(items.get(0).isEngine());
+        assertEquals("libSAEngineFPS.so", items.get(0).name);
+    }
+
     @Test public void draftReleasesNotListed() throws Exception {
         JSONObject draft = release("engine-dev", "", asset(10, "SAEngineGame-0.6.apk", digest()))
                 .put("draft", true);

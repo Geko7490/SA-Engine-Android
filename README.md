@@ -1,46 +1,53 @@
-# SA Engine Android — Mobile launcher and Unity engine port
+# SA Engine Mobile — native GTA SA Android FPS toolkit
 
-**Status (2026-11-19): V0.5 Android launcher APK is available. V0.6 playable Unity GTA SA game APK is not yet built; Unity activation credentials are missing.**
+**Current status (19 Nov 2026): Android launcher APK and ARM64 native FPS plugin compile and publish successfully. They are not a complete GTA San Andreas game APK. Real on-device 60/120 FPS gameplay has NOT been verified.**
 
-[Download launcher APK](https://github.com/Geko7490/SA-Engine-Android/releases/tag/launcher-dev) · [V0.2–V0.6 status and usage](docs/V0.2-V0.6_STATUS.md) · [GitHub Actions](https://github.com/Geko7490/SA-Engine-Android/actions)
+## Download the built components
 
-This project is an experimental performance-oriented Android port overlay for the MIT-licensed [SanAndreasUnity](https://github.com/in0finite/SanAndreasUnity). It is not a complete GTA San Andreas redistribution or a new standalone Rust game engine.
+- [SA Engine Mobile Launcher Android APK](https://github.com/Geko7490/SA-Engine-Android/releases/tag/launcher-dev)
+- [Native GTA SA FPS plugin (.so)](https://github.com/Geko7490/SA-Engine-Android/releases/tag/native-fps-dev)
+- [Complete native setup, limitations, and licensed game requirements](docs/NATIVE_GTA_SA_FPS.md)
+- [GitHub Actions builds and automated tests](https://github.com/Geko7490/SA-Engine-Android/actions)
 
-## Implemented
-- Android ARM64 / IL2CPP Unity 2020.3.26f1 build script and GitHub Actions pipeline.
-- Pinned upstream checkout with Git submodules; guarded, repeatable upstream compatibility patches.
-- Fix the upstream 25 FPS mobile override; persistent 30/60/90/120 FPS target selection.
-- LOW/MED/HIGH graphics profiles, adaptive draw distance and per-frame world-cell update budget.
-- Optional DXT1/DXT3 software fallback on Android GPUs lacking required compressed-texture support.
-- Development-only touch panel and 60-second frame-time CSV benchmark recorder.
-- Android game directory auto-detection for the user's own PC GTA SA files under `Application.persistentDataPath/GTASA`.
-- GitHub Actions source preflight: Python integration tests and actual C# compilation against minimal Unity API stubs; known DXT pixel/bounds test cases.
+The GitHub repository is currently private, so release downloads require an account with repository access.
 
-## Get started
+## What works at the source/build level
 
-**Source preflight:** Push to `main` triggers the [Android Unity Port workflow](.github/workflows/android-unity.yml) with `build_apk=false` behaviour. Source checks are automated and do not require a Unity license.
+**Launcher** (Java / Android / Gradle; no Unity):
+- Finds the legally installed `com.rockstargames.gtasa` application, displays its version and launches it.
+- Selectable **30 / 60 / 90 / 120 FPS**, plus low/medium/high quality preferences.
+- Verified GitHub Release catalogue and resumable SHA-256-checked package downloads.
+- Installs the project-owned ARM64 FPS plugin into a **user-approved** AML mods folder using Android Storage Access Framework (including `AMLMods/com.rockstargames.gtasa`).
+- Preserves the ZIP/folder importer for user's own GTA files.
+- Stores the selected FPS in `SAEngineFPS.cfg` beside the plugin for use when GTA SA is started.
+- Keeps experimental original Unity-based engine launcher options separated from the official-game path.
 
-**APK attempt:** Use GitHub Actions → Android Unity Port → Run workflow → `build_apk=true`. This uses GameCI, which requires the repository owner to configure Unity activation credentials as Actions secrets, plus working Android tooling. The CI attempt may still uncover actual Unity compilation errors.
+**Native FPS module** (NDK C++ original code, MIT):
+- Runs only after user has installed a compatible, *AML-enabled* Android GTA SA with required SAUtils mod.
+- Runtime guards for two known Android 2.10 ARM64 frame-rate patch locations, and three experimental Android 2.11 ARM64 locations.
+- Refuses to patch unknown game binary layouts. Does **not** disable signature checks, provide official game binaries or bypass Android security.
+- Adds a **SA Engine FPS Limit** in-game menu entry when SAUtils loads successfully.
+- Target FPS is **not** guaranteed actual performance; physics, animations, UI and mission timing require on-device testing.
 
-**Manual preparation:**
-```bash
-bash scripts/checkout-upstream.sh SanAndreasUnity
-bash scripts/prepare-unity-port.sh SanAndreasUnity
-```
-Then open `SanAndreasUnity` with Unity 2020.3.26f1 and invoke `SAAndroidBuild.BuildArm64` with Android Build Support installed.
+The native module is NOT a standalone executable and the launcher is NOT GTA San Andreas.
 
-For Android file placement, device benchmarking, limits, and planned HD graphics packs, read [Device & Benchmark](docs/DEVICE_AND_BENCHMARK.md). For more detail, see [Build Guide](docs/ANDROID_BUILD.md) and [CI Notes](docs/GITHUB_ACTIONS.md).
+## Prerequisites for actual GTA gameplay
 
-## Legal
-No Rockstar or Take-Two game data is shipped. A legally obtained GTA San Andreas PC installation is required for gameplay. This project is unofficial and not affiliated with Rockstar Games.
+1. User-owned licensed **GTA San Andreas for Android**, with an appropriate version (2.10 ARM64 or experimental 2.11).
+2. [AndroidModLoader](https://github.com/AndroidModLoader/AndroidModLoader) and [SAUtils](https://github.com/AndroidModLoader/SAUtils) installed into **the user's game** through their supported installation process. The stock Play Store game cannot load AML extensions by itself.
+3. User consents to install this project-owned `libSAEngineFPS.so` into the accessible AML mods folder, then launches the GTA SA app.
 
-The original code in this repository is MIT licensed (see LICENSE). Upstream SanAndreasUnity is MIT-licensed and retains its own copyright notice. Git submodules must comply with their own licenses. A previous, separate Rust candidate `ghosty2004/sa-engine` declares itself `UNLICENSED`, so its code has not been imported here.
+Never install an untrusted modified game APK; obtain the game through legitimate channels. Neither Rockstar's APK nor `libGTASA.so` or copyrighted assets may be mirrored in this repository without permission.
 
-## Not yet implemented or proven
-- No Unity Android build completed; no installable APK validated.
-- No device FPS, thermal, loading-time or memory benchmark measured.
-- No modern Android Storage Access Framework game-folder/ZIP importer yet.
-- No HD graphics pack loader, texture streaming allocator, or Vulkan-specific optimization.
-- Touch controls are provided by the existing SanAndreasUnity project, not rewritten by this overlay.
+## Build/test status
 
-Next engineering step: compile the real Unity project, resolve any Android plug-in/SDK errors, install on device, and compare repeatable in-game 60-second baseline measurements before claiming any performance gain.
+- Android launcher: GitHub Actions Gradle build plus Java JUnit catalogue, safety, and FPS validation tests.
+- Native module: GitHub Actions Android NDK ARM64 build plus C++ FPS instruction tests.
+- Unity project: source overlay exists under `UnityPort/`; **not built as a playable game**, because Unity Editor activation and device validation remain unsatisfied. Unity Actions CI is manual to avoid unnecessary builds.
+- No real smartphone gameplay validation, measured FPS improvement, or verified 120 FPS cap on a real GTA SA installation yet.
+
+Native code is offered as an **experimental mod for a legally owned game**, not a pirated game replacement.
+
+## Licenses and attribution
+
+Our original launcher and FPS module are MIT-licensed. AndroidModLoader and SAUtils have their own MIT notices and remain linked as external build dependencies. `JPatch` is proprietary freeware; it is not copied or redistributed. SanAndreasUnity is MIT-licensed; original GTA SA assets/engine are copyrighted to their respective owners. This is an independent, unofficial project.

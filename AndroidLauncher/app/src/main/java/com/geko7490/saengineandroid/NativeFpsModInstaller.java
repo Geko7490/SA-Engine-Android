@@ -40,12 +40,13 @@ public final class NativeFpsModInstaller {
         if (colon < 1) return false;
         String relative = path.substring(colon + 1);
         return relative.equals("android/data/com.rockstargames.gtasa/mods") ||
-                relative.equals("android_unprotected/data/com.rockstargames.gtasa/mods");
+                relative.equals("android_unprotected/data/com.rockstargames.gtasa/mods") ||
+                relative.equals("amlmods/com.rockstargames.gtasa");
     }
 
     private static DocumentFile checkedModsDir(Context app, Uri treeUri) throws IOException {
         if (treeUri == null || !isValidTreeId(DocumentsContract.getTreeDocumentId(treeUri)))
-            throw new IOException("GTA SA AML mods klasörünü seç: .../com.rockstargames.gtasa/mods");
+            throw new IOException("AMLMods/com.rockstargames.gtasa veya Android/data/com.rockstargames.gtasa/mods klasörünü seç");
         DocumentFile folder = DocumentFile.fromTreeUri(app, treeUri);
         if (folder == null || !folder.isDirectory())
             throw new IOException("Seçilen mods klasörüne erişilemiyor");

@@ -51,7 +51,7 @@ class AndroidOverlayTests(unittest.TestCase):
         builder = (base / "Editor/SAAndroidBuild.cs").read_text()
         self.assertIn("AndroidArchitecture.ARM64", builder)
         self.assertIn("BuildPipeline.BuildPlayer", builder)
-        self.assertIn("com.geko7490.saengineandroid", builder)
+        self.assertIn("com.geko7490.saenginegame", builder)
 
     def test_mobile_dxt_guarded_patch(self):
         with TemporaryDirectory() as temp:

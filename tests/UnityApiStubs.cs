@@ -25,6 +25,19 @@ namespace UnityEngine
         public T AddComponent<T>() where T : new() { return new T(); }
     }
 
+    public class AndroidJavaObject : IDisposable
+    {
+        public T Call<T>(string method, params object[] args) { return default(T); }
+        public void Call(string method, params object[] args) { }
+        public void Dispose() { }
+    }
+    public class AndroidJavaClass : AndroidJavaObject
+    {
+        public AndroidJavaClass(string className) { }
+        public T GetStatic<T>(string member) { return default(T); }
+        public T CallStatic<T>(string method, params object[] args) { return default(T); }
+        public void CallStatic(string method, params object[] args) { }
+    }
     public class MonoBehaviour : Object
     {
         public T GetComponent<T>() where T : class { return null; }

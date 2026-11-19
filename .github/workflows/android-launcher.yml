@@ -29,9 +29,14 @@ jobs:
         run: |
           set -euo pipefail
           echo "Using preinstalled Android SDK at $ANDROID_HOME"
-          sdkmanager --version
-          yes | sdkmanager --licenses > /dev/null || true
-          sdkmanager "platforms;android-35" "build-tools;35.0.0"
+          SDK_MANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | head -n 1)"
+          if [ -z "$SDK_MANAGER" ]; then
+            echo "::error::No Android command line tools available on runner"
+            exit 1
+          fi
+          "$SDK_MANAGER" --version
+          yes | "$SDK_MANAGER" --licenses > /dev/null || true
+          "$SDK_MANAGER" "platforms;android-35" "build-tools;35.0.0"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4

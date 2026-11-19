@@ -43,6 +43,7 @@ class AndroidOverlayTests(unittest.TestCase):
         self.assertIn("MobilePerformancePanel", bootstrap)
         tuner = (base / "Scripts/Performance/MobileWorldTuner.cs").read_text()
         self.assertIn("WorldManager.Singleton", tuner)
+        self.assertIn("maxTimeToUpdatePerFrameMs", tuner)
         self.assertIn("SA_ANDROID_QUALITY", tuner)
         panel = (base / "Scripts/Performance/MobilePerformancePanel.cs").read_text()
         self.assertIn("Debug.isDebugBuild", panel)

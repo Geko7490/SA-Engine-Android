@@ -5,6 +5,11 @@
 #include "isautils.h"
 #include <stdint.h>
 #include <stdio.h>
+#include <dlfcn.h>
+#include <string>
+#include <fstream>
+
+extern "C" void OnAllModsLoaded();
 
 MYMOD(net.geko7490.saengine.fps, SA Engine FPS, 0.1, Geko7490)
 NEEDGAME(com.rockstargames.gtasa)
@@ -28,6 +33,30 @@ namespace {
     bool validated = false;
     bool ready = false;
     int selected = 1;
+    std::string configFile;
+
+    void findConfigFile() {
+        Dl_info info{};
+        if (!dladdr(reinterpret_cast<const void*>(&OnAllModsLoaded), &info) || !info.dli_fname)
+            return;
+        std::string path(info.dli_fname);
+        std::string::size_type slash = path.find_last_of('/');
+        if (slash != std::string::npos)
+            configFile = path.substr(0, slash + 1) + "SAEngineFPS.cfg";
+    }
+    bool readDesiredFps(int& fps) {
+        if (configFile.empty()) return false;
+        std::ifstream file(configFile);
+        int value = 0;
+        if (!(file >> value)) return false;
+        for (int cap : kCaps) if (cap == value) { fps = value; return true; }
+        return false;
+    }
+    void persistDesiredFps(int fps) {
+        if (configFile.empty()) return;
+        std::ofstream file(configFile, std::ios::trunc);
+        if (file) file << fps << "\\n";
+    }
 
     // Accept only the original 2.10 instruction or an immediate MOVZ we
     // previously wrote. Refuse to touch other patchers' unexpected bytes.
@@ -68,6 +97,7 @@ namespace {
         if (applyFrameCap(kCaps[newIndex])) {
             selected = newIndex;
             aml->MLSSetInt("SAENGINE_FPS_MODE", selected);
+            persistDesiredFps(kCaps[newIndex]);
         }
     }
 }
@@ -85,7 +115,11 @@ extern "C" void OnAllModsLoaded() {
 
     aml->MLSGetInt("SAENGINE_FPS_MODE", &selected);
     if (selected < 0 || selected > 3) selected = 1;
-
+    findConfigFile();
+    int requested = 0;
+    if (readDesiredFps(requested)) {
+        for (int i = 0; i < 4; ++i) if (kCaps[i] == requested) selected = i;
+    }
     applyFrameCap(kCaps[selected]);
 
     auto* utils = reinterpret_cast<ISAUtils*>(GetInterface("SAUtils"));

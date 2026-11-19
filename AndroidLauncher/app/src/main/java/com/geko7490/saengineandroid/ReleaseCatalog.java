@@ -36,6 +36,7 @@ public final class ReleaseCatalog {
         }
 
         public boolean isEngine() { return "engine".equals(kind); }
+        public boolean isFpsPlugin() { return "fps-plugin".equals(kind); }
         public String readableSize() {
             return String.format(Locale.US, "%.1f MB", size / (1024.0 * 1024.0));
         }
@@ -96,6 +97,7 @@ public final class ReleaseCatalog {
                             String name = asset.optString("name", "");
                             String kind;
                             if (name.startsWith("SAEngineGame-") && name.endsWith(".apk")) kind = "engine";
+                            else if (tag.equals("native-fps-dev") && name.equals("libSAEngineFPS.so")) kind = "fps-plugin";
                             else if (tag.equals("launcher-dev") && (name.equals("app-debug.apk") ||
                                     name.equals("SAEngineMobile-Launcher-debug.apk"))) kind = "launcher-preview";
                             else continue;

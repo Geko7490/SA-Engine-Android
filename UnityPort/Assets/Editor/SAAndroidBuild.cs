@@ -37,7 +37,7 @@ public static class SAAndroidBuild
         PlayerSettings.SetScriptingBackend(BuildTargetGroup.Android, ScriptingImplementation.IL2CPP);
         PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
         PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel26;
-        PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Android, "com.geko7490.saengineandroid");
+        PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Android, "com.geko7490.saenginegame");
         PlayerSettings.productName = "SA Engine Android";
         PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevelAuto;
         // Preserve project-specific rendering settings; no assumption that Vulkan works yet.

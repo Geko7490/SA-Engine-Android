@@ -169,10 +169,12 @@ public final class MainActivity extends Activity {
                 version = info.versionName == null ? "" : info.versionName;
             } catch (Exception ignored) { }
         }
-        boolean knownVersion = version.startsWith("2.10");
+        boolean version210 = version.startsWith("2.10");
+        boolean version211 = version.startsWith("2.11");
         officialGameState.setText(installed ?
             "GTA SA " + (version.isEmpty() ? "(sürüm bilinmiyor)" : version) +
-                (knownVersion ? " • 2.10 FPS mod adayı" : " • FPS mod uyumu doğrulanmadı")
+                (version210 ? " • 2.10 FPS mod adayı" :
+                version211 ? " • 2.11 FPS mod DENEYSEL" : " • FPS mod uyumu doğrulanmadı")
             : "Android GTA SA bulunamadı");
         officialLaunch.setEnabled(installed);
         officialLaunch.setAlpha(installed ? 1f : 0.5f);

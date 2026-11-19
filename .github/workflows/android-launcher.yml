@@ -71,8 +71,8 @@ jobs:
           asset="$apk#SAEngineMobile-Launcher-debug.apk"
           if gh release view launcher-dev --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
             gh release upload launcher-dev "$asset" --clobber --repo "$GITHUB_REPOSITORY"
-            gh release edit launcher-dev --repo "$GITHUB_REPOSITORY" --notes "Android game-file importer and settings launcher. This is not a playable GTA SA APK. Last build: $GITHUB_SHA"
+            gh release edit launcher-dev --repo "$GITHUB_REPOSITORY" --notes "V0.5 launcher: GitHub catalog, resumable verified downloads, user-approved APK install, Android game-data bridge, ZIP/folder importer. Not a playable GTA SA game APK. Last build: $GITHUB_SHA"
           else
-            gh release create launcher-dev "$asset" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --title "SA Engine Mobile — Android launcher preview" --notes "Android game-file importer and settings launcher. This is not a playable GTA SA APK. Build: $GITHUB_SHA"
+            gh release create launcher-dev "$asset" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --title "SA Engine Mobile — Android launcher preview" --notes "V0.5 launcher: GitHub catalog, resumable verified downloads, user-approved APK install, Android game-data bridge, ZIP/folder importer. Not a playable GTA SA game APK. Build: $GITHUB_SHA"
           fi
           echo "APK release: https://github.com/$GITHUB_REPOSITORY/releases/tag/launcher-dev"

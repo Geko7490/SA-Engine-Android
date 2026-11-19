@@ -41,6 +41,7 @@ jobs:
           cp UnityPort/Assets/Scripts/Performance/*.cs /tmp/sa-android-dxt/
           cp UnityPort/Assets/Editor/SAAndroidBuild.cs /tmp/sa-android-dxt/
           dotnet run --project /tmp/sa-android-dxt --configuration Release -p:DefineConstants=UNITY_ANDROID
+          dotnet build /tmp/sa-android-dxt --configuration Release -p:DefineConstants=UNITY_EDITOR
 
       - name: Clone pinned SanAndreasUnity and submodules
         run: bash scripts/checkout-upstream.sh SanAndreasUnity

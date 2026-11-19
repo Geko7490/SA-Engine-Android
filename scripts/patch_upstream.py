@@ -90,7 +90,7 @@ LOADER_ANDROID_PATH = """string path = Config.GetPath(Config.const_game_dir);
                 }
             }"""
 
-LOADER_CORO = "private static IEnumerator StepSelectGTAPath ()\\n\\t\\t{\\n\\t\\t\\tyield return null;"
+LOADER_CORO = "private static IEnumerator StepSelectGTAPath ()\n\t\t{\n\t\t\tyield return null;"
 LOADER_BRIDGE = """private static IEnumerator StepSelectGTAPath ()
         {
             yield return null;
@@ -107,7 +107,7 @@ def patch_loader(root: Path) -> str:
     src = root / "Assets/Scripts/Behaviours/Loader.cs"
     if not src.is_file():
         raise FileNotFoundError(f"Missing upstream Loader source: {src}")
-    content = src.read_text(encoding="utf-8-sig").replace("\\r\\n", "\\n")
+    content = src.read_text(encoding="utf-8-sig").replace("\r\n", "\n")
     changed = False
     if content.count(LOADER_ANDROID_PATH) != 1:
         if content.count(LOADER_PATH) != 1:
@@ -120,7 +120,7 @@ def patch_loader(root: Path) -> str:
         content = content.replace(LOADER_CORO, LOADER_BRIDGE, 1)
         changed = True
     if changed:
-        src.write_text(content, encoding="utf-8", newline="\\n")
+        src.write_text(content, encoding="utf-8", newline="\n")
     return "patched" if changed else "already-patched"
 
 def main() -> int:

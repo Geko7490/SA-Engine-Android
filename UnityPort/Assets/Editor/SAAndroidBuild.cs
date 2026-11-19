@@ -27,7 +27,8 @@ public static class SAAndroidBuild
             paths = Array.ConvertAll(enabledScenes, s => s.path);
         }
         string apk = Environment.GetEnvironmentVariable("SA_ANDROID_APK_PATH");
-        if (string.IsNullOrEmpty(apk)) apk = "Builds/SAEngineAndroid-dev.apk";
+        if (string.IsNullOrEmpty(apk)) apk = Path.Combine(Path.GetDirectoryName(Application.dataPath), "Builds/SAEngineAndroid-dev.apk");
+        apk = Path.GetFullPath(apk);
         string dir = Path.GetDirectoryName(apk);
         if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
 

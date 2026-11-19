@@ -50,6 +50,9 @@ jobs:
       - name: Assemble real debug APK (no Unity license required)
         run: gradle -p AndroidLauncher --no-daemon --stacktrace :app:assembleDebug
 
+      - name: Run release catalogue and integrity unit tests
+        run: gradle -p AndroidLauncher --no-daemon :app:testDebugUnitTest
+
       - name: Verify APK exists and record SHA256
         run: |
           set -euo pipefail

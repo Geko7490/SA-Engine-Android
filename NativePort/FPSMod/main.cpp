@@ -3,6 +3,7 @@
 #include <mod/amlmod.h>
 #include <mod/logger.h>
 #include "isautils.h"
+#include "fps_instruction.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <dlfcn.h>
@@ -26,7 +27,6 @@ END_DEPLIST()
 namespace {
     constexpr uintptr_t kLimitSite1 = 0x70A38C;
     constexpr uintptr_t kLimitSite2 = 0x70A458;
-    constexpr uint32_t kStockMoveW9 = 0x321E0FE9u;
     constexpr int kCaps[] = { 30, 60, 90, 120 };
     const char* kCapsText[] = { "30 FPS", "60 FPS", "90 FPS", "120 FPS" };
     uintptr_t gameBase = 0;
@@ -55,14 +55,13 @@ namespace {
     void persistDesiredFps(int fps) {
         if (configFile.empty()) return;
         std::ofstream file(configFile, std::ios::trunc);
-        if (file) file << fps << "\\n";
+        if (file) file << fps << "\n";
     }
 
     // Accept only the original 2.10 instruction or an immediate MOVZ we
     // previously wrote. Refuse to touch other patchers' unexpected bytes.
     bool isSupported(uint32_t instruction) {
-        return instruction == kStockMoveW9 ||
-            ((instruction & 0xFFE0001Fu) == 0x52800009u);
+        return saenginefps::isKnownInstruction(instruction);
     }
 
     bool validateGame() {
@@ -78,12 +77,12 @@ namespace {
 
     bool applyFrameCap(int fps) {
         if (!validated || !ready) return false;
-        if (fps != 30 && fps != 60 && fps != 90 && fps != 120) return false;
+        if (!saenginefps::isAllowedFps(fps)) return false;
         if (!validateGame()) return false;
 
         // AArch64: MOVZ W9,#fps. Do not overwrite anything until both
         // patch sites match the expected instruction signature.
-        const uint32_t movz = 0x52800009u | (static_cast<uint32_t>(fps) << 5);
+        const uint32_t movz = saenginefps::encodeCapMovz(fps);
         aml->Unprot(gameBase + kLimitSite1, sizeof(uint32_t));
         aml->Unprot(gameBase + kLimitSite2, sizeof(uint32_t));
         aml->Write32(gameBase + kLimitSite1, movz);

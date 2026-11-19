@@ -1,53 +1,36 @@
-# SA Engine Mobile — native GTA SA Android FPS toolkit
+# SA Engine Mobile — GTA SA Mod Center (Android)
 
-**Current status (19 Nov 2026): Android launcher APK and ARM64 native FPS plugin compile and publish successfully. They are not a complete GTA San Andreas game APK. Real on-device 60/120 FPS gameplay has NOT been verified.**
+**Current version: V0.6.0 Mod Center.**
 
-## Download the built components
+An independent Android launcher and mod manager for **user-installed GTA San Andreas Android**. The application does not redistribute Rockstar's game or bypass the game's package signatures.
 
-- [SA Engine Mobile Launcher Android APK](https://github.com/Geko7490/SA-Engine-Android/releases/tag/launcher-dev)
-- [Native GTA SA FPS plugin (.so)](https://github.com/Geko7490/SA-Engine-Android/releases/tag/native-fps-dev)
-- [Complete native setup, limitations, and licensed game requirements](docs/NATIVE_GTA_SA_FPS.md)
-- [GitHub Actions builds and automated tests](https://github.com/Geko7490/SA-Engine-Android/actions)
+## Downloads
 
-The GitHub repository is currently private, so release downloads require an account with repository access.
+- [V0.6.0 Android APK](https://github.com/Geko7490/SA-Engine-Android/releases/download/launcher-dev/app-debug.apk)
+- [V0.6 release and source](https://github.com/Geko7490/SA-Engine-Android/releases/tag/launcher-dev)
+- [V0.6 setup, two graphics mods and limitations](docs/MOD_CENTER_V0.6.md)
+- [Latest Android CI](https://github.com/Geko7490/SA-Engine-Android/actions)
 
-## What works at the source/build level
+## Mod Center
+- Detects installed GTA SA Android version (target **2.11.311**).
+- In-app source browser and Android DownloadManager for two real community graphics mods:
+  - PS2 Graphics v5.0 — [original source](https://libertycity.net/files/gta-san-andreas-ios-android/146765-ps2-graphics-v5.0.html).
+  - Timecyc uuk ENB — [original source](https://libertycity.net/files/gta-san-andreas-ios-android/242422-timecyc-uuk-enb.html).
+- Strict file importer for user-downloaded ZIPs: `timecyc.dat`, `timecycp.dat`, `colorcycle.dat`.
+- Shizuku integrated via official Shizuku API v13.1.5 and user service. Executes explicit user-entered ADB shell commands and shows exit status and output without PC, **after Shizuku is activated by the user**.
+- Read-only permission diagnostics and a transactional backup-and-restore path for files already accessible at the conventional GTA SA external location.
 
-**Launcher** (Java / Android / Gradle; no Unity):
-- Finds the legally installed `com.rockstargames.gtasa` application, displays its version and launches it.
-- Selectable **30 / 60 / 90 / 120 FPS**, plus low/medium/high quality preferences.
-- Verified GitHub Release catalogue and resumable SHA-256-checked package downloads.
-- Installs the project-owned ARM64 FPS plugin into a **user-approved** AML mods folder using Android Storage Access Framework (including `AMLMods/com.rockstargames.gtasa`).
-- Preserves the ZIP/folder importer for user's own GTA files.
-- Stores the selected FPS in `SAEngineFPS.cfg` beside the plugin for use when GTA SA is started.
-- Keeps experimental original Unity-based engine launcher options separated from the official-game path.
+## Important: GTA SA 2.11.311 compatibility is not yet verified
+Compilation and emulator activity launch are not proof that stock GTA SA 2.11.311 loads graphics changes from external `Android/data`. This version may store its game assets in APK/splits and protected directories. When the expected external files do not exist, the Mod Center refuses the install rather than claiming it succeeded. **No game APK or proprietary assets are included.**
 
-**Native FPS module** (NDK C++ original code, MIT):
-- Runs only after user has installed a compatible, *AML-enabled* Android GTA SA with required SAUtils mod.
-- Runtime guards for two known Android 2.10 ARM64 frame-rate patch locations, and three experimental Android 2.11 ARM64 locations.
-- Refuses to patch unknown game binary layouts. Does **not** disable signature checks, provide official game binaries or bypass Android security.
-- Adds a **SA Engine FPS Limit** in-game menu entry when SAUtils loads successfully.
-- Target FPS is **not** guaranteed actual performance; physics, animations, UI and mission timing require on-device testing.
+The app is not a full replacement game or a guaranteed one-button graphics installer for GTA SA 2.11.311. Its shell management, archive inspection, and restore tools are real features, but final on-device game integration needs a compatible loader or Rockstar-provided external override path.
 
-The native module is NOT a standalone executable and the launcher is NOT GTA San Andreas.
+## Shizuku
+Obtain [Shizuku](https://shizuku.rikka.app/download/) and follow its official [wireless debugging setup guide](https://shizuku.rikka.app/guide/setup/). The app does not self-activate ADB privileges or grant itself root.
 
-## Prerequisites for actual GTA gameplay
+## Other project components
+- Experimental native GTA SA ARM64 FPS plugin: [release](https://github.com/Geko7490/SA-Engine-Android/releases/tag/native-fps-dev).
+- Original Unity overlay sources under `UnityPort`. This is not currently an installable or playable GTA SA engine APK.
 
-1. User-owned licensed **GTA San Andreas for Android**, with an appropriate version (2.10 ARM64 or experimental 2.11).
-2. [AndroidModLoader](https://github.com/AndroidModLoader/AndroidModLoader) and [SAUtils](https://github.com/AndroidModLoader/SAUtils) installed into **the user's game** through their supported installation process. The stock Play Store game cannot load AML extensions by itself.
-3. User consents to install this project-owned `libSAEngineFPS.so` into the accessible AML mods folder, then launches the GTA SA app.
-
-Never install an untrusted modified game APK; obtain the game through legitimate channels. Neither Rockstar's APK nor `libGTASA.so` or copyrighted assets may be mirrored in this repository without permission.
-
-## Build/test status
-
-- Android launcher: GitHub Actions Gradle build plus Java JUnit catalogue, safety, and FPS validation tests.
-- Native module: GitHub Actions Android NDK ARM64 build plus C++ FPS instruction tests.
-- Unity project: source overlay exists under `UnityPort/`; **not built as a playable game**, because Unity Editor activation and device validation remain unsatisfied. Unity Actions CI is manual to avoid unnecessary builds.
-- No real smartphone gameplay validation, measured FPS improvement, or verified 120 FPS cap on a real GTA SA installation yet.
-
-Native code is offered as an **experimental mod for a legally owned game**, not a pirated game replacement.
-
-## Licenses and attribution
-
-Our original launcher and FPS module are MIT-licensed. AndroidModLoader and SAUtils have their own MIT notices and remain linked as external build dependencies. `JPatch` is proprietary freeware; it is not copied or redistributed. SanAndreasUnity is MIT-licensed; original GTA SA assets/engine are copyrighted to their respective owners. This is an independent, unofficial project.
+## Testing / source
+`AndroidLauncher/` is a Java/Gradle application, built using Android SDK 35 and Java 17. GitHub Actions compiles the Android APK, runs JUnit security tests, and runs optional Android 35 emulator launch smoke tests. Source is released under MIT; third-party game assets and graphics mods remain owned and distributed by their respective authors.

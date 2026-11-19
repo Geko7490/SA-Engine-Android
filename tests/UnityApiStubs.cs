@@ -30,7 +30,7 @@ namespace UnityEngine
         public T GetComponent<T>() where T : class { return null; }
     }
 
-    public static class Application { public static int targetFrameRate = 60; public static string dataPath = "/tmp/SanAndreasUnity/Assets"; }
+    public static class Application { public static int targetFrameRate = 60; public static string dataPath = "/tmp/SanAndreasUnity/Assets"; public static string persistentDataPath = "/tmp/sa-engine-data"; }
     public static class Time { public static float unscaledTime; public static float unscaledDeltaTime; }
     public static class Debug { public static bool isDebugBuild = true; public static void Log(object message) { } }
 

@@ -20,6 +20,7 @@ public final class NativeFpsModInstallerTest {
             "primary:Android_unprotected/data/com.other.game/mods"));
         assertFalse(NativeFpsModInstaller.isValidTreeId(
             "primary:Android/data/com.rockstargames.gtasa/files"));
+        assertFalse(NativeFpsModInstaller.isValidTreeId("primary:Downloads/custom/com.rockstargames.gtasa/mods"));
         assertFalse(NativeFpsModInstaller.isValidTreeId("primary:Download"));
         assertFalse(NativeFpsModInstaller.isValidTreeId("primary:Android_unprotected/data/com.rockstargames.gtasa/mods/evil"));
         assertFalse(NativeFpsModInstaller.isValidTreeId(null));

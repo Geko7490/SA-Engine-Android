@@ -13,6 +13,8 @@ namespace SAEngineAndroid.Performance
             var host = new GameObject("SA Android Performance Governor");
             Object.DontDestroyOnLoad(host);
             host.AddComponent<MobilePerformanceGovernor>();
+            host.AddComponent<MobileWorldTuner>();
+            host.AddComponent<MobilePerformancePanel>();
 #endif
         }
     }

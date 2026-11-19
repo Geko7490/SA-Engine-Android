@@ -16,10 +16,11 @@ if [[ -e "$PROJECT/Assets/Scripts/Performance/MobilePerformanceGovernor.cs" ]]; 
   echo "Target governor already exists; refusing to overwrite without review." >&2
   exit 3
 fi
-mkdir -p "$PROJECT/Assets/Scripts/Performance" "$PROJECT/Assets/Editor"
+mkdir -p "$PROJECT/Assets/Scripts/Performance" "$PROJECT/Assets/Editor" "$PROJECT/Assets/Scripts/Importing/Conversion"
 cp "$ROOT/UnityPort/Assets/Scripts/Performance/MobilePerformanceGovernor.cs" "$PROJECT/Assets/Scripts/Performance/"
 cp "$ROOT/UnityPort/Assets/Scripts/Performance/MobilePerformanceBootstrap.cs" "$PROJECT/Assets/Scripts/Performance/"
 cp "$ROOT/UnityPort/Assets/Editor/SAAndroidBuild.cs" "$PROJECT/Assets/Editor/"
+cp "$ROOT/UnityPort/Assets/Scripts/Importing/Conversion/MobileDxtDecoder.cs" "$PROJECT/Assets/Scripts/Importing/Conversion/"
 python3 "$ROOT/scripts/patch_upstream.py" "$PROJECT"
 echo "Installed Android overlay in $PROJECT"
 echo "Open with Unity 2020.3.26f1, install Android Build Support + IL2CPP and build via SAAndroidBuild.BuildArm64."

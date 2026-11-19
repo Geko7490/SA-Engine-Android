@@ -10,6 +10,10 @@ sleep 4
 echo "--- Inspect UI and find the actual Mod Center button ---"
 adb shell uiautomator dump /sdcard/sa_mod_ui.xml
 adb shell cat /sdcard/sa_mod_ui.xml > /tmp/sa_mod_ui.xml
+echo "Foreground activities:"
+adb shell dumpsys activity activities | grep -E 'mResumed|topResumed|MainActivity|ModCenterActivity' | head -n 30 || true
+echo "Recent application crashes (if any):"
+adb shell logcat -d -v brief | grep -A 18 'FATAL EXCEPTION' | tail -n 55 || true
 coords="$(python3 - <<'PY'
 import re,xml.etree.ElementTree as ET
 root=ET.parse('/tmp/sa_mod_ui.xml').getroot()
@@ -22,6 +26,7 @@ for node in root.iter('node'):
         print((a[0]+a[2])//2,(a[1]+a[3])//2)
         break
 else:
+    print("UI nodes:", [(n.attrib.get('class'), n.attrib.get('text')) for n in root.iter('node') if n.attrib.get('text')][:30], file=__import__('sys').stderr)
     raise SystemExit('Mod Center button not found in screen hierarchy')
 PY
 )"

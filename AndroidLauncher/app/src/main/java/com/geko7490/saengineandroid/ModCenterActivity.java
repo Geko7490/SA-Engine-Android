@@ -54,6 +54,9 @@ public final class ModCenterActivity extends Activity {
         label(conn, "CİHAZ & OYUN", 15, PRIMARY, true);
         status = label(conn, "Shizuku bağlantısı kontrol ediliyor", 14, FG, false);
         button(conn, "SHIZUKU'YU BAĞLA / İZİN VER", () -> bridge.connect());
+        button(conn, "SHIZUKU KURULUM YARDIMI", () ->
+                startActivity(new Intent(Intent.ACTION_VIEW,
+                        Uri.parse("https://shizuku.rikka.app/guide/setup/"))));
         button(conn, "ADB ERİŞİM TESTİ (SADECE OKU)", this::diagnostics);
 
         LinearLayout mods = card(root);
@@ -139,6 +142,9 @@ public final class ModCenterActivity extends Activity {
         super.onActivityResult(req, result, data);
         if (req != PICK_MOD || result != RESULT_OK || data == null || data.getData() == null) return;
         final Uri uri = data.getData();
+        archive = null;
+        archiveInfo.setText("Yeni ZIP analiz ediliyor...");
+        refresh();
         perform("ZIP analiz ediliyor...", () -> {
             archive = GraphicsArchive.fromZip(this, uri);
             runOnUiThread(() -> {

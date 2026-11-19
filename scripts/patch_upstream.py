@@ -32,12 +32,53 @@ def patch_project(root: Path) -> str:
     src.write_text(normalized, encoding="utf-8", newline="\n")
     return "patched"
 
+
+# Android Mali/Adreno devices do not universally expose S3TC texture support.
+# Preserve the compressed path when supported; decode to RGBA32 only as fallback.
+TEXTURE_CREATE = "var tex = new Texture2D(src.Width, src.Height, format, false /*loadMips*/);"
+TEXTURE_PREP = """bool needsDxtFallback = Application.platform == RuntimePlatform.Android &&
+                ((src.Compression == CompressionMode.DXT1 && !SystemInfo.SupportsTextureFormat(TextureFormat.DXT1)) ||
+                 (src.Compression == CompressionMode.DXT3 && !SystemInfo.SupportsTextureFormat(TextureFormat.DXT5)));
+            if (needsDxtFallback)
+                format = TextureFormat.RGBA32;
+
+            var tex = new Texture2D(src.Width, src.Height, format, false /*loadMips*/);"""
+TEXTURE_DATA = "var data = src.ImageData;"
+TEXTURE_FALLBACK = """var data = src.ImageData;
+            if (needsDxtFallback)
+            {
+                data = src.Compression == CompressionMode.DXT1
+                    ? MobileDxtDecoder.DecodeDxt1(src.ImageData, src.Width, src.Height)
+                    : MobileDxtDecoder.DecodeDxt3(src.ImageData, src.Width, src.Height);
+            }
+            else
+            {"""
+TEXTURE_APPLY = "tex.LoadRawTextureData(data);"
+TEXTURE_APPLY_REPLACEMENT = "}\n\n            tex.LoadRawTextureData(data);"
+
+def patch_textures(root: Path) -> str:
+    src = root / "Assets/Scripts/Importing/Conversion/TextureDictionary.cs"
+    if not src.is_file():
+        raise FileNotFoundError(f"Missing upstream TextureDictionary: {src}")
+    text = src.read_text(encoding="utf-8-sig").replace("\r\n", "\n")
+    if text.count(TEXTURE_PREP) == 1 and text.count(TEXTURE_FALLBACK) == 1:
+        return "already-patched"
+    for anchor in (TEXTURE_CREATE, TEXTURE_DATA, TEXTURE_APPLY):
+        if text.count(anchor) != 1:
+            raise RuntimeError(f"TextureDictionary layout changed: expected exactly one {anchor!r}")
+    text = text.replace(TEXTURE_CREATE, TEXTURE_PREP, 1)
+    text = text.replace(TEXTURE_DATA, TEXTURE_FALLBACK, 1)
+    text = text.replace(TEXTURE_APPLY, TEXTURE_APPLY_REPLACEMENT, 1)
+    src.write_text(text, encoding="utf-8", newline="\n")
+    return "patched"
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("project", type=Path)
     args = parser.parse_args()
     try:
         print("Android FPS patch:", patch_project(args.project))
+        print("Android DXT patch:", patch_textures(args.project))
     except (FileNotFoundError, RuntimeError) as exc:
         print("ERROR:", exc, file=sys.stderr)
         return 1

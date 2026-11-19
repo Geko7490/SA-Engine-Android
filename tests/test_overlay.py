@@ -49,6 +49,7 @@ class AndroidOverlayTests(unittest.TestCase):
         builder = (base / "Editor/SAAndroidBuild.cs").read_text()
         self.assertIn("AndroidArchitecture.ARM64", builder)
         self.assertIn("BuildPipeline.BuildPlayer", builder)
+        self.assertIn("com.geko7490.saengineandroid", builder)
 
     def test_mobile_dxt_guarded_patch(self):
         with TemporaryDirectory() as temp:
@@ -61,6 +62,16 @@ class AndroidOverlayTests(unittest.TestCase):
             self.assertIn(patcher.TEXTURE_FALLBACK, text)
             self.assertIn(patcher.TEXTURE_APPLY_REPLACEMENT, text)
             self.assertEqual(patcher.patch_textures(Path(temp)), "already-patched")
+
+    def test_android_owned_game_data_folder_patch(self):
+        with TemporaryDirectory() as temp:
+            path = Path(temp) / "Assets/Scripts/Behaviours/Loader.cs"
+            path.parent.mkdir(parents=True)
+            path.write_text("class Loader {\\n" + patcher.LOADER_PATH + "\\n}", encoding="utf-8")
+            self.assertEqual(patcher.patch_loader(Path(temp)), "patched")
+            updated = path.read_text()
+            self.assertIn(patcher.LOADER_ANDROID_PATH, updated)
+            self.assertEqual(patcher.patch_loader(Path(temp)), "already-patched")
 
     def test_preparation_script_contains_safe_patch(self):
         text = (ROOT / "scripts/prepare-unity-port.sh").read_text()

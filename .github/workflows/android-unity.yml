@@ -1,9 +1,6 @@
 name: Android Unity Port
 
 on:
-  push:
-    branches: [main]
-  pull_request:
   workflow_dispatch:
     inputs:
       build_apk:

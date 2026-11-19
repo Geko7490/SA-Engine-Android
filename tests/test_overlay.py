@@ -1,0 +1,52 @@
+#!/usr/bin/env python3
+"""No-Unity source preflight tests. These do NOT prove Unity compilation."""
+from pathlib import Path
+from tempfile import TemporaryDirectory
+import importlib.util
+import unittest
+
+ROOT = Path(__file__).resolve().parents[1]
+spec = importlib.util.spec_from_file_location("upstream_patch", ROOT / "scripts/patch_upstream.py")
+patcher = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(patcher)
+
+class AndroidOverlayTests(unittest.TestCase):
+    def test_upstream_patch_is_targeted_and_idempotent(self):
+        with TemporaryDirectory() as temp:
+            path = Path(temp) / "Assets/Scripts/Behaviours/GameManager.cs"
+            path.parent.mkdir(parents=True)
+            path.write_text("class GameManager {\n" + patcher.EXPECTED + "\n}", encoding="utf-8")
+            self.assertEqual(patcher.patch_project(Path(temp)), "patched")
+            updated = path.read_text()
+            self.assertIn(patcher.REPLACEMENT, updated)
+            self.assertNotIn(patcher.EXPECTED, updated)
+            self.assertEqual(patcher.patch_project(Path(temp)), "already-patched")
+
+    def test_unknown_upstream_change_fails_closed(self):
+        with TemporaryDirectory() as temp:
+            path = Path(temp) / "Assets/Scripts/Behaviours/GameManager.cs"
+            path.parent.mkdir(parents=True)
+            path.write_text("class GameManager {}", encoding="utf-8")
+            with self.assertRaises(RuntimeError):
+                patcher.patch_project(Path(temp))
+
+    def test_overlay_files_exist_and_implement_expected_contract(self):
+        base = ROOT / "UnityPort/Assets"
+        governor = (base / "Scripts/Performance/MobilePerformanceGovernor.cs").read_text()
+        self.assertIn("SetTargetFps", governor)
+        self.assertIn("Application.targetFrameRate", governor)
+        self.assertIn("SA_ANDROID_TARGET_FPS", governor)
+        bootstrap = (base / "Scripts/Performance/MobilePerformanceBootstrap.cs").read_text()
+        self.assertIn("RuntimeInitializeOnLoadMethod", bootstrap)
+        self.assertIn("MobilePerformanceGovernor", bootstrap)
+        builder = (base / "Editor/SAAndroidBuild.cs").read_text()
+        self.assertIn("AndroidArchitecture.ARM64", builder)
+        self.assertIn("BuildPipeline.BuildPlayer", builder)
+
+    def test_preparation_script_contains_safe_patch(self):
+        text = (ROOT / "scripts/prepare-unity-port.sh").read_text()
+        self.assertIn("patch_upstream.py", text)
+        self.assertIn("MobilePerformanceBootstrap.cs", text)
+
+if __name__ == "__main__":
+    unittest.main()

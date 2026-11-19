@@ -2,6 +2,7 @@ package com.geko7490.saengineandroid;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.net.Uri;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
@@ -24,6 +25,7 @@ import java.util.concurrent.Executors;
 
 /** V0.2-0.4: catalogue, resumable download and verified Android installer UI. */
 public final class PackageCenterActivity extends Activity {
+    private static final int REQUEST_FPS_MOD_FOLDER = 444;
     private static final int BACKGROUND = Color.rgb(12, 10, 20);
     private static final int CARD = Color.rgb(27, 21, 42);
     private static final int PURPLE = Color.rgb(148, 97, 253);
@@ -36,6 +38,8 @@ public final class PackageCenterActivity extends Activity {
     private TextView status;
     private volatile boolean busy;
     private String sessionToken = "";
+    private File pendingFpsPlugin;
+    private TextView pendingFpsStatus;
 
     private int dp(float x) { return (int) (x * getResources().getDisplayMetrics().density + 0.5f); }
 
@@ -91,7 +95,7 @@ public final class PackageCenterActivity extends Activity {
                 runOnUiThread(() -> {
                     busy = false;
                     status.setText(found.isEmpty() ? "Motor paketi bulunamadı. Henüz oynanabilir motor release'i yayınlanmamış olabilir." :
-                            found.size() + " doğrulanabilir APK paketi bulundu.");
+                            found.size() + " doğrulanabilir paket bulundu.");
                     for (ReleaseCatalog.PackageEntry entry : found) renderEntry(entry);
                 });
             } catch (Exception ex) {
@@ -112,9 +116,11 @@ public final class PackageCenterActivity extends Activity {
         margins.bottomMargin = dp(12);
         packages.addView(panel, margins);
 
-        title(panel, item.isEngine() ? "OYUN MOTORU" : "LAUNCHER ÖNİZLEME", 15, PURPLE);
+        title(panel, item.isEngine() ? "OYUN MOTORU" :
+                item.isFpsPlugin() ? "GTA SA FPS MODÜLÜ • ARM64" : "LAUNCHER ÖNİZLEME", 15, PURPLE);
         label(panel, item.tag + "  •  " + item.readableSize(), 14, TEXT);
-        label(panel, item.name + "\n" + item.androidCompatibility() +
+        label(panel, item.name + "\n" + (item.isFpsPlugin() ?
+                "GTA SA Android v2.10 ARM64 + AML/SAUtils gerekir" : item.androidCompatibility()) +
                 (item.prerelease ? "  •  Test sürümü" : ""), 12, MUTED);
         if (!item.notes.isEmpty()) label(panel,
                 item.notes.length() > 380 ? item.notes.substring(0, 380) + "…" : item.notes,
@@ -124,7 +130,8 @@ public final class PackageCenterActivity extends Activity {
         bar.setMax(1000);
         panel.addView(bar, new LinearLayout.LayoutParams(-1, dp(8)));
         TextView progress = label(panel, "İndirme hazır.", 12, MUTED);
-        Button download = addAction(panel, item.isEngine() ? "İNDİR VE DOĞRULA" : "TEST APK'SINI İNDİR", null);
+        Button download = addAction(panel, item.isEngine() ? "İNDİR VE DOĞRULA" :
+                item.isFpsPlugin() ? "FPS MODUNU İNDİR VE KUR" : "TEST APK'SINI İNDİR", null);
         Button cancel = addAction(panel, "İPTAL ET", null);
         cancel.setEnabled(false);
         cancel.setAlpha(.45f);
@@ -160,6 +167,15 @@ public final class PackageCenterActivity extends Activity {
                             } catch (Exception ex) {
                                 progress.setText("Kurulum reddedildi: " + ex.getMessage());
                             }
+                        } else if (item.isFpsPlugin()) {
+                            pendingFpsPlugin = file;
+                            pendingFpsStatus = progress;
+                            progress.setText("Mod doğrulandı. GTA SA AML mods klasörünü seç.");
+                            Intent folder = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+                            folder.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION |
+                                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION |
+                                    Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+                            startActivityForResult(folder, REQUEST_FPS_MOD_FOLDER);
                         } else {
                             progress.setText("Launcher test APK indirildi ve doğrulandı. Bu, GTA SA oyun motoru değildir.");
                         }
@@ -180,6 +196,43 @@ public final class PackageCenterActivity extends Activity {
         cancel.setOnClickListener(v -> {
             ResumableDownloader running = active[0];
             if (running != null) running.cancel();
+        });
+    }
+
+    @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != REQUEST_FPS_MOD_FOLDER) return;
+        if (resultCode != RESULT_OK || data == null || data.getData() == null) {
+            if (pendingFpsStatus != null) pendingFpsStatus.setText("Mod kurulumu iptal edildi.");
+            pendingFpsPlugin = null;
+            return;
+        }
+        final Uri folder = data.getData();
+        final File verified = pendingFpsPlugin;
+        final TextView statusView = pendingFpsStatus;
+        pendingFpsPlugin = null;
+        try {
+            int flags = data.getFlags() &
+                    (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            getContentResolver().takePersistableUriPermission(folder, flags);
+        } catch (SecurityException ignored) {
+            // A current grant is still enough for immediate installation.
+        }
+        if (verified == null) return;
+        int requestedFps = getSharedPreferences("sa_engine_settings", MODE_PRIVATE).getInt("fps", 60);
+        worker.execute(() -> {
+            try {
+                NativeFpsModInstaller.install(this, folder, verified, requestedFps);
+                runOnUiThread(() -> {
+                    if (statusView != null)
+                        statusView.setText("FPS mod dosyası ve " + requestedFps +
+                            " FPS ayarı AML mods klasörüne kopyalandı. AML/SAUtils kuruluysa GTA SA'yı yeniden başlat.");
+                });
+            } catch (Exception ex) {
+                runOnUiThread(() -> {
+                    if (statusView != null) statusView.setText("Mod kurulum hatası: " + ex.getMessage());
+                });
+            }
         });
     }
 

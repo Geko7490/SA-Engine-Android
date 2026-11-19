@@ -30,9 +30,9 @@ namespace UnityEngine
         public T GetComponent<T>() where T : class { return null; }
     }
 
-    public static class Application { public static int targetFrameRate = 60; }
+    public static class Application { public static int targetFrameRate = 60; public static string dataPath = "/tmp/SanAndreasUnity/Assets"; }
     public static class Time { public static float unscaledTime; public static float unscaledDeltaTime; }
-    public static class Debug { public static bool isDebugBuild = true; }
+    public static class Debug { public static bool isDebugBuild = true; public static void Log(object message) { } }
 
     public static class QualitySettings
     {
@@ -110,5 +110,66 @@ namespace SanAndreasUnity.Behaviours.World
     {
         public static WorldManager Singleton { get; } = new WorldManager();
         public float MaxDrawDistance { get; set; } = 1000f;
+    }
+}
+
+
+namespace UnityEditor
+{
+    public enum BuildTarget { Android }
+    public enum BuildTargetGroup { Android }
+    public enum AndroidBuildSystem { Gradle }
+    public enum ScriptingImplementation { IL2CPP }
+    public enum AndroidArchitecture { ARM64 }
+    public enum AndroidSdkVersions { AndroidApiLevel26, AndroidApiLevelAuto }
+    [Flags] public enum BuildOptions { Development = 1, AllowDebugging = 2 }
+    public sealed class EditorBuildSettingsScene { public bool enabled; public string path = ""; }
+    public static class EditorBuildSettings
+    {
+        public static EditorBuildSettingsScene[] scenes = Array.Empty<EditorBuildSettingsScene>();
+    }
+    public static class EditorUserBuildSettings
+    {
+        public static bool buildAppBundle;
+        public static AndroidBuildSystem androidBuildSystem;
+    }
+    public static class PlayerSettings
+    {
+        public static string productName = "";
+        public static void SetScriptingBackend(BuildTargetGroup target, ScriptingImplementation value) { }
+        public static void SetApplicationIdentifier(BuildTargetGroup target, string id) { }
+        public static class Android
+        {
+            public static AndroidArchitecture targetArchitectures;
+            public static AndroidSdkVersions minSdkVersion;
+            public static AndroidSdkVersions targetSdkVersion;
+        }
+    }
+    public struct BuildPlayerOptions
+    {
+        public string[] scenes;
+        public string locationPathName;
+        public BuildTarget target;
+        public BuildOptions options;
+    }
+    public static class BuildPipeline
+    {
+        public static Build.Reporting.BuildReport BuildPlayer(BuildPlayerOptions options)
+        {
+            return new Build.Reporting.BuildReport();
+        }
+    }
+}
+namespace UnityEditor.Build.Reporting
+{
+    public enum BuildResult { Succeeded, Failed }
+    public sealed class BuildSummary
+    {
+        public BuildResult result = BuildResult.Succeeded;
+        public long totalSize;
+    }
+    public sealed class BuildReport
+    {
+        public BuildSummary summary = new BuildSummary();
     }
 }

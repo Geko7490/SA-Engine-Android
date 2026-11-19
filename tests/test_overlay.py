@@ -43,10 +43,26 @@ class AndroidOverlayTests(unittest.TestCase):
         self.assertIn("AndroidArchitecture.ARM64", builder)
         self.assertIn("BuildPipeline.BuildPlayer", builder)
 
+    def test_mobile_dxt_guarded_patch(self):
+        with TemporaryDirectory() as temp:
+            path = Path(temp) / "Assets/Scripts/Importing/Conversion/TextureDictionary.cs"
+            path.parent.mkdir(parents=True)
+            path.write_text("\\n".join([patcher.TEXTURE_CREATE, patcher.TEXTURE_DATA, patcher.TEXTURE_APPLY]), encoding="utf-8")
+            self.assertEqual(patcher.patch_textures(Path(temp)), "patched")
+            text = path.read_text()
+            self.assertIn(patcher.TEXTURE_PREP, text)
+            self.assertIn(patcher.TEXTURE_FALLBACK, text)
+            self.assertIn(patcher.TEXTURE_APPLY_REPLACEMENT, text)
+            self.assertEqual(patcher.patch_textures(Path(temp)), "already-patched")
+
     def test_preparation_script_contains_safe_patch(self):
         text = (ROOT / "scripts/prepare-unity-port.sh").read_text()
         self.assertIn("patch_upstream.py", text)
         self.assertIn("MobilePerformanceBootstrap.cs", text)
+        self.assertIn("MobileDxtDecoder.cs", text)
+        decoder = (ROOT / "UnityPort/Assets/Scripts/Importing/Conversion/MobileDxtDecoder.cs").read_text()
+        self.assertIn("DecodeDxt1", decoder)
+        self.assertIn("DecodeDxt3", decoder)
 
 if __name__ == "__main__":
     unittest.main()

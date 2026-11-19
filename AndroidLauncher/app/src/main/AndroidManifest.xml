@@ -28,6 +28,15 @@
             android:exported="true"
             android:grantUriPermissions="true"
             android:readPermission="com.geko7490.saengineandroid.permission.GAME_DATA"/>
+        <provider
+            android:name="rikka.shizuku.ShizukuProvider"
+            android:authorities="${applicationId}.shizuku"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="android.permission.INTERACT_ACROSS_USERS_FULL"/>
+        <meta-data android:name="moe.shizuku.client.V3_SUPPORT" android:value="true"/>
+        <activity android:name=".ModCenterActivity" android:exported="false"/>
+        <activity android:name=".ModSourceActivity" android:exported="false"/>
         <activity android:name=".PackageCenterActivity" android:exported="false"/>
         <activity
             android:name=".MainActivity"

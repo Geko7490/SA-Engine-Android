@@ -1,0 +1,76 @@
+name: Native GTA SA ARM64 FPS Plugin
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'NativePort/FPSMod/**'
+      - '.github/workflows/native-fps-plugin.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sa-native-fps-plugin
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+
+      - name: Configure Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Fetch MIT AML headers and SAUtils interface
+        run: |
+          set -euo pipefail
+          git clone --filter=blob:none --no-checkout https://github.com/AndroidModLoader/AndroidModLoader.git "$RUNNER_TEMP/aml-sdk"
+          git -C "$RUNNER_TEMP/aml-sdk" checkout --detach 2def78aec259cf9c8eabe52e78de8e434cf03bdd
+          git clone --filter=blob:none --no-checkout https://github.com/AndroidModLoader/SAUtils.git "$RUNNER_TEMP/sautils-sdk"
+          git -C "$RUNNER_TEMP/sautils-sdk" checkout --detach ace8752de2d0fa502b027bd0a9c6ca2d3bcd04e8
+          mkdir -p NativePort/FPSMod/sdk
+          cp -R "$RUNNER_TEMP/aml-sdk/mod" NativePort/FPSMod/sdk/mod
+          cp "$RUNNER_TEMP/sautils-sdk/isautils.h" NativePort/FPSMod/sdk/isautils.h
+          test -s NativePort/FPSMod/sdk/mod/amlmod.h
+          test -s NativePort/FPSMod/sdk/isautils.h
+
+      - name: Build source without any Rockstar binaries
+        run: |
+          set -euo pipefail
+          NDK_BUILD="$(find "$ANDROID_HOME/ndk" -maxdepth 2 -name ndk-build -type f | sort -V | tail -n 1)"
+          if [ -z "$NDK_BUILD" ]; then
+            SDK_MANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f | head -n 1)"
+            "$SDK_MANAGER" "ndk;27.2.12479018"
+            NDK_BUILD="$ANDROID_HOME/ndk/27.2.12479018/ndk-build"
+          fi
+          "$NDK_BUILD" NDK_PROJECT_PATH=NativePort/FPSMod \
+            APP_BUILD_SCRIPT="$GITHUB_WORKSPACE/NativePort/FPSMod/Android.mk" \
+            NDK_APPLICATION_MK="$GITHUB_WORKSPACE/NativePort/FPSMod/Application.mk" \
+            NDK_OUT="$RUNNER_TEMP/sa-engine-obj" \
+            NDK_LIBS_OUT="$GITHUB_WORKSPACE/NativePort/FPSMod/libs" -j2
+          test -s NativePort/FPSMod/libs/arm64-v8a/libSAEngineFPS.so
+          file NativePort/FPSMod/libs/arm64-v8a/libSAEngineFPS.so
+          sha256sum NativePort/FPSMod/libs/arm64-v8a/libSAEngineFPS.so
+
+      - name: Publish open-source FPS module to own release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          artifact=NativePort/FPSMod/libs/arm64-v8a/libSAEngineFPS.so
+          description="Original MIT AML FPS module for user-owned GTA SA Android v2.10 ARM64. Requires AML+SAUtils installed inside the user's game. No GTA game binaries or data included. Device gameplay not verified."
+          if gh release view native-fps-dev --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            gh release upload native-fps-dev "$artifact" --clobber --repo "$GITHUB_REPOSITORY"
+            gh release edit native-fps-dev --repo "$GITHUB_REPOSITORY" --notes "$description"
+          else
+            gh release create native-fps-dev "$artifact" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+              --prerelease --title "Native SA Engine FPS mod — ARM64 preview" --notes "$description"
+          fi

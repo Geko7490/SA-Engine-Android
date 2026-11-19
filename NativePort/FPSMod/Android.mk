@@ -1,7 +1,7 @@
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 LOCAL_MODULE := SAEngineFPS
-LOCAL_SRC_FILES := main.cpp
+LOCAL_SRC_FILES := main.cpp sdk/mod/logger.cpp
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/sdk
 LOCAL_CPPFLAGS += -std=c++17 -O2 -DNDEBUG
 LOCAL_LDLIBS += -llog -ldl

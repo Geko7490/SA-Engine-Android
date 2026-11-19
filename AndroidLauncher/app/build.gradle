@@ -11,7 +11,7 @@ android {
         minSdk 26
         targetSdk 35
         versionCode 6
-        versionName '0.5.0-bridge-preview'
+        versionName '0.5.2-native-fps-preview'
     }
 
     buildTypes {

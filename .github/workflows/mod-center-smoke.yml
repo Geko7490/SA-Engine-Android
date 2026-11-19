@@ -53,18 +53,4 @@ jobs:
           profile: pixel_6
           emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           disable-animations: true
-          script: |
-            set -euo pipefail
-            apk=AndroidLauncher/app/build/outputs/apk/debug/app-debug.apk
-            adb install -r "$apk"
-            adb shell am start -n com.geko7490.saengineandroid/.MainActivity
-            sleep 4
-            adb shell am start -n com.geko7490.saengineandroid/.ModCenterActivity
-            sleep 5
-            adb shell dumpsys activity activities | grep -F 'com.geko7490.saengineandroid/.ModCenterActivity'
-            adb shell logcat -d -v brief > /tmp/mod-center-logcat.txt
-            if grep -A 15 'FATAL EXCEPTION' /tmp/mod-center-logcat.txt | grep -F 'com.geko7490.saengineandroid'; then
-              echo "::error::Mod Center Android activity crashed" >&2
-              exit 1
-            fi
-            echo "Mod Center Activity launch smoke passed (Shizuku absent; no original game installed)"
+          script: bash scripts/smoke-mod-center.sh

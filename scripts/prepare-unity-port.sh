@@ -21,6 +21,7 @@ cp "$ROOT/UnityPort/Assets/Scripts/Performance/MobilePerformanceGovernor.cs" "$P
 cp "$ROOT/UnityPort/Assets/Scripts/Performance/MobilePerformanceBootstrap.cs" "$PROJECT/Assets/Scripts/Performance/"
 cp "$ROOT/UnityPort/Assets/Scripts/Performance/MobileWorldTuner.cs" "$PROJECT/Assets/Scripts/Performance/"
 cp "$ROOT/UnityPort/Assets/Scripts/Performance/MobilePerformancePanel.cs" "$PROJECT/Assets/Scripts/Performance/"
+cp "$ROOT/UnityPort/Assets/Scripts/Performance/MobileBenchmarkRecorder.cs" "$PROJECT/Assets/Scripts/Performance/"
 cp "$ROOT/UnityPort/Assets/Editor/SAAndroidBuild.cs" "$PROJECT/Assets/Editor/"
 cp "$ROOT/UnityPort/Assets/Scripts/Importing/Conversion/MobileDxtDecoder.cs" "$PROJECT/Assets/Scripts/Importing/Conversion/"
 python3 "$ROOT/scripts/patch_upstream.py" "$PROJECT"

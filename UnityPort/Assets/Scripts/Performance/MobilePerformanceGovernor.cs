@@ -46,7 +46,8 @@ namespace SAEngineAndroid.Performance
             savedVSync = QualitySettings.vSyncCount;
             savedTargetFrameRate = Application.targetFrameRate;
             savedShadowDistance = QualitySettings.shadowDistance;
-            ApplyTarget();
+            int storedFps = PlayerPrefs.GetInt("SA_ANDROID_TARGET_FPS", 60);
+            SetTargetFps(storedFps, false);
             elapsed = 0f;
             frames = 0;
             overBudgetWindows = 0;
@@ -63,10 +64,20 @@ namespace SAEngineAndroid.Performance
 
         public void SetTargetFps(int fps)
         {
+            SetTargetFps(fps, true);
+        }
+
+        private void SetTargetFps(int fps, bool persist)
+        {
             if (fps <= 30) targetMode = TargetMode.Fps30;
             else if (fps <= 60) targetMode = TargetMode.Fps60;
             else if (fps <= 90) targetMode = TargetMode.Fps90;
             else targetMode = TargetMode.Fps120;
+            if (persist)
+            {
+                PlayerPrefs.SetInt("SA_ANDROID_TARGET_FPS", (int)targetMode);
+                PlayerPrefs.Save();
+            }
             ApplyTarget();
         }
 

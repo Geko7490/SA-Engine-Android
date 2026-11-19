@@ -43,6 +43,20 @@ jobs:
           dotnet run --project /tmp/sa-android-dxt --configuration Release -p:DefineConstants=UNITY_ANDROID
           dotnet build /tmp/sa-android-dxt --configuration Release -p:DefineConstants=UNITY_EDITOR
 
+      - name: Compile Android bridge Java against Android SDK
+        run: |
+          set -euo pipefail
+          echo "Compiling game file bridge with Android API stubs"
+          sdkJar="$ANDROID_HOME/platforms/android-35/android.jar"
+          if [ ! -f "$sdkJar" ]; then
+            sdkmanager="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f | head -n 1)"
+            "$sdkmanager" "platforms;android-35"
+          fi
+          mkdir -p /tmp/sa-bridge-classes
+          javac -source 8 -target 8 -cp "$sdkJar" -d /tmp/sa-bridge-classes \
+            UnityPort/Assets/Plugins/Android/SAEngineBridge.androidlib/src/main/java/com/geko7490/saenginegame/GameDataReceiver.java
+          test -s /tmp/sa-bridge-classes/com/geko7490/saenginegame/GameDataReceiver.class
+
       - name: Clone pinned SanAndreasUnity and submodules
         run: bash scripts/checkout-upstream.sh SanAndreasUnity
 
@@ -55,6 +69,9 @@ jobs:
           test -s SanAndreasUnity/Assets/Scripts/Performance/MobilePerformanceGovernor.cs
           test -s SanAndreasUnity/Assets/Scripts/Performance/MobilePerformanceBootstrap.cs
           test -s SanAndreasUnity/Assets/Editor/SAAndroidBuild.cs
+          test -s SanAndreasUnity/Assets/Scripts/Performance/GameDataBridge.cs
+          test -s SanAndreasUnity/Assets/Plugins/Android/SAEngineBridge.androidlib/src/main/java/com/geko7490/saenginegame/GameDataReceiver.java
+          grep -q 'GameDataBridge.Begin' SanAndreasUnity/Assets/Scripts/Behaviours/Loader.cs
           grep -q '2020.3.26f1' SanAndreasUnity/ProjectSettings/ProjectVersion.txt
           grep -q 'SA_ANDROID_TARGET_FPS' SanAndreasUnity/Assets/Scripts/Behaviours/GameManager.cs
           echo "Source preflight passed; Unity compilation is a separate step."

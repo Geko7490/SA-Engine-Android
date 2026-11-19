@@ -6,6 +6,7 @@ on:
     paths:
       - '.github/workflows/mod-center-smoke.yml'
       - 'AndroidLauncher/**'
+      - 'scripts/smoke-mod-center.sh'
   workflow_dispatch:
 
 permissions:

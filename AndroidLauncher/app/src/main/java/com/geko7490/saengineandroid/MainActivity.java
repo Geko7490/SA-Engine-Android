@@ -78,7 +78,9 @@ public final class MainActivity extends Activity {
         setContentView(scroll);
 
         text("SA ENGINE", 29, PURPLE, true);
-        text("MOBILE  /  NATIVE FPS PREVIEW", 13, MUTED, true);
+        text("MOBILE  /  MOD CENTER V0.6", 13, MUTED, true);
+        action(content, "GTA SA MOD CENTER  •  GRAFİK & ADB SHELL", () ->
+                startActivity(new Intent(this, ModCenterActivity.class)), false);
         space(18);
 
         LinearLayout stateCard = card();

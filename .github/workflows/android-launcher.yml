@@ -9,7 +9,11 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: launcher-dev-release
+  cancel-in-progress: true
 
 jobs:
   apk:
@@ -55,12 +59,17 @@ jobs:
           sha256sum "$apk" | tee AndroidLauncher/apk-sha256.txt
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$apk" | head -n 9
 
-      - name: Upload Android APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: SAEngineMobile-Launcher-v0.1-debug
-          path: |
-            AndroidLauncher/app/build/outputs/apk/debug/app-debug.apk
-            AndroidLauncher/apk-sha256.txt
-          if-no-files-found: error
-          retention-days: 30
+      - name: Publish APK to private GitHub Release (avoids artifact quota)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          apk=AndroidLauncher/app/build/outputs/apk/debug/app-debug.apk
+          asset="$apk#SAEngineMobile-Launcher-debug.apk"
+          if gh release view launcher-dev --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            gh release upload launcher-dev "$asset" --clobber --repo "$GITHUB_REPOSITORY"
+            gh release edit launcher-dev --repo "$GITHUB_REPOSITORY" --notes "Android game-file importer and settings launcher. This is not a playable GTA SA APK. Last build: $GITHUB_SHA"
+          else
+            gh release create launcher-dev "$asset" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --title "SA Engine Mobile — Android launcher preview" --notes "Android game-file importer and settings launcher. This is not a playable GTA SA APK. Build: $GITHUB_SHA"
+          fi
+          echo "APK release: https://github.com/$GITHUB_REPOSITORY/releases/tag/launcher-dev"

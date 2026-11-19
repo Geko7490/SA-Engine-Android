@@ -22,6 +22,14 @@ cp "$ROOT/UnityPort/Assets/Scripts/Performance/MobilePerformanceBootstrap.cs" "$
 cp "$ROOT/UnityPort/Assets/Scripts/Performance/MobileWorldTuner.cs" "$PROJECT/Assets/Scripts/Performance/"
 cp "$ROOT/UnityPort/Assets/Scripts/Performance/MobilePerformancePanel.cs" "$PROJECT/Assets/Scripts/Performance/"
 cp "$ROOT/UnityPort/Assets/Scripts/Performance/MobileBenchmarkRecorder.cs" "$PROJECT/Assets/Scripts/Performance/"
+cp "$ROOT/UnityPort/Assets/Scripts/Performance/GameDataBridge.cs" "$PROJECT/Assets/Scripts/Performance/"
+mkdir -p "$PROJECT/Assets/Plugins/Android"
+if [[ -e "$PROJECT/Assets/Plugins/Android/SAEngineBridge.androidlib" ]]; then
+  echo "Existing game bridge plugin; refusing to overwrite" >&2
+  exit 4
+fi
+cp -R "$ROOT/UnityPort/Assets/Plugins/Android/SAEngineBridge.androidlib" "$PROJECT/Assets/Plugins/Android/"
+
 cp "$ROOT/UnityPort/Assets/Editor/SAAndroidBuild.cs" "$PROJECT/Assets/Editor/"
 cp "$ROOT/UnityPort/Assets/Scripts/Importing/Conversion/MobileDxtDecoder.cs" "$PROJECT/Assets/Scripts/Importing/Conversion/"
 python3 "$ROOT/scripts/patch_upstream.py" "$PROJECT"

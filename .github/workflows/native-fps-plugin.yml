@@ -72,7 +72,7 @@ jobs:
         run: |
           set -euo pipefail
           artifact=NativePort/FPSMod/libs/arm64-v8a/libSAEngineFPS.so
-          description="Original MIT AML FPS module for user-owned GTA SA Android v2.10 ARM64. Requires AML+SAUtils installed inside the user's game. No GTA game binaries or data included. Device gameplay not verified."
+          description="Original MIT AML 30/60/90/120 FPS module for user-owned GTA SA Android ARM64 v2.10 (experimental v2.11). Requires AML and SAUtils installed inside legally owned game. No game binaries/assets included. Real-device FPS/physics not validated."
           if gh release view native-fps-dev --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
             gh release upload native-fps-dev "$artifact" --clobber --repo "$GITHUB_REPOSITORY"
             gh release edit native-fps-dev --repo "$GITHUB_REPOSITORY" --notes "$description"

@@ -50,6 +50,8 @@ public final class MainActivity extends Activity {
     private TextView status;
     private TextView importText;
     private TextView settingsText;
+    private TextView engineState;
+    private Button engineLaunch;
     private boolean importing;
     private int fps;
     private int quality;
@@ -74,13 +76,15 @@ public final class MainActivity extends Activity {
         setContentView(scroll);
 
         text("SA ENGINE", 29, PURPLE, true);
-        text("MOBILE  /  0.1 PREVIEW", 13, MUTED, true);
+        text("MOBILE  /  0.5 ENGINE LAUNCHER", 13, MUTED, true);
         space(18);
 
         LinearLayout stateCard = card();
         label(stateCard, "MOTOR DURUMU", 13, PURPLE, true);
-        label(stateCard, "Android launcher hazır", 21, TEXT, true);
-        label(stateCard, "Unity oyun motoru APK'ya henüz entegre edilmedi. Bu sürüm oyun dosyalarını güvenli biçimde içe aktarır.", 14, MUTED, false);
+        engineState = label(stateCard, "Motor kontrol ediliyor...", 21, TEXT, true);
+        label(stateCard, "GitHub üzerinden Android oyun motoru sürümlerini kontrol et, indir, doğrula ve kur.", 14, MUTED, false);
+        action(stateCard, "GITHUB DEPOSUNDAN KUR", () ->
+                startActivity(new Intent(this, PackageCenterActivity.class)), false);
         space(12);
 
         LinearLayout gameCard = card();
@@ -127,13 +131,32 @@ public final class MainActivity extends Activity {
         label(info, "Özel dosya erişim izni istemez. Android sistem dosya seçicisi kullanılır.", 12, MUTED, false);
 
         space(18);
-        Button launch = action(content, "OYUN MOTORU  •  HENÜZ HAZIR DEĞİL", null, true);
-        launch.setEnabled(false);
-        launch.setAlpha(0.60f);
+        engineLaunch = action(content, "OYUNU BAŞLAT", () ->
+                EngineLaunchBridge.start(this, fps, quality), true);
+        updateEngineStatus();
         text("Unofficial project. Rockstar / Take-Two ile bağlantılı değildir. Oyun verileri APK içinde yer almaz.",
                 12, MUTED, false);
         updateGameStatus();
         refreshSettingsText();
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        updateEngineStatus();
+    }
+
+    private void updateEngineStatus() {
+        if (engineState == null || engineLaunch == null) return;
+        boolean ready = EngineLaunchBridge.isInstalled(this);
+        boolean data = false;
+        try {
+            data = GameDataImporter.isValidRoot(new GameDataImporter(this).getGameRoot());
+        } catch (Exception ignored) { }
+        engineState.setText(ready ? "Motor APK yüklü" : "Oyun motoru yüklü değil");
+        engineLaunch.setEnabled(ready && data);
+        engineLaunch.setAlpha(ready && data ? 1f : .5f);
+        engineLaunch.setText(ready && data ? "OYUNU BAŞLAT" :
+                ready ? "ÖNCE GTA SA DOSYALARINI EKLE" : "ÖNCE MOTORU KUR");
     }
 
     private void pickZip() {
@@ -203,6 +226,7 @@ public final class MainActivity extends Activity {
         } catch (Exception ex) {
             status.setText("Depolama erişilemiyor: " + ex.getMessage());
         }
+        updateEngineStatus();
     }
 
     private void persistSettings() {

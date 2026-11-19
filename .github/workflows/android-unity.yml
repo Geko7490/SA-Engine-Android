@@ -37,7 +37,10 @@ jobs:
           dotnet new console --framework net8.0 --output /tmp/sa-android-dxt --no-restore
           cp tests/DxtDecoderSmoke.cs /tmp/sa-android-dxt/Program.cs
           cp UnityPort/Assets/Scripts/Importing/Conversion/MobileDxtDecoder.cs /tmp/sa-android-dxt/
-          dotnet run --project /tmp/sa-android-dxt --configuration Release
+          cp tests/UnityApiStubs.cs /tmp/sa-android-dxt/
+          cp UnityPort/Assets/Scripts/Performance/*.cs /tmp/sa-android-dxt/
+          cp UnityPort/Assets/Editor/SAAndroidBuild.cs /tmp/sa-android-dxt/
+          dotnet run --project /tmp/sa-android-dxt --configuration Release -p:DefineConstants=UNITY_ANDROID
 
       - name: Clone pinned SanAndreasUnity and submodules
         run: bash scripts/checkout-upstream.sh SanAndreasUnity

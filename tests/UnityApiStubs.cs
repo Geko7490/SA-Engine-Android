@@ -101,6 +101,11 @@ namespace SanAndreasUnity.Behaviours
 }
 namespace SanAndreasUnity.Behaviours.World
 {
+    public sealed class Cell
+    {
+        public static Cell Instance { get; } = new Cell();
+        public ushort maxTimeToUpdatePerFrameMs = 10;
+    }
     public sealed class WorldManager
     {
         public static WorldManager Singleton { get; } = new WorldManager();

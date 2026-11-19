@@ -5,6 +5,8 @@
     <queries>
         <package android:name="com.geko7490.saenginegame"/>
     </queries>
+    <permission android:name="com.geko7490.saengineandroid.permission.GAME_DATA"
+        android:protectionLevel="signature"/>
     <application
         android:allowBackup="false"
         android:label="@string/app_name"
@@ -19,6 +21,11 @@
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/apk_file_paths"/>
         </provider>
+        <provider android:name=".GameDataProvider"
+            android:authorities="com.geko7490.saengineandroid.gamedata"
+            android:exported="true"
+            android:grantUriPermissions="true"
+            android:readPermission="com.geko7490.saengineandroid.permission.GAME_DATA"/>
         <activity android:name=".PackageCenterActivity" android:exported="false"/>
         <activity
             android:name=".MainActivity"

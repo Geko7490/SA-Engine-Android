@@ -120,7 +120,7 @@ public final class PackageCenterActivity extends Activity {
                 item.isFpsPlugin() ? "GTA SA FPS MODÜLÜ • ARM64" : "LAUNCHER ÖNİZLEME", 15, PURPLE);
         label(panel, item.tag + "  •  " + item.readableSize(), 14, TEXT);
         label(panel, item.name + "\n" + (item.isFpsPlugin() ?
-                "GTA SA Android v2.10 ARM64 + AML/SAUtils gerekir" : item.androidCompatibility()) +
+                "GTA SA Android 2.10 ARM64 (2.11 deneysel) + AML/SAUtils gerekir" : item.androidCompatibility()) +
                 (item.prerelease ? "  •  Test sürümü" : ""), 12, MUTED);
         if (!item.notes.isEmpty()) label(panel,
                 item.notes.length() > 380 ? item.notes.substring(0, 380) + "…" : item.notes,

@@ -25,8 +25,13 @@ END_DEPLIST()
 #error "This module is intentionally ARM64-only"
 #endif
 namespace {
-    constexpr uintptr_t kLimitSite1 = 0x70A38C;
-    constexpr uintptr_t kLimitSite2 = 0x70A458;
+    constexpr uintptr_t k210First = 0x70A38C;
+    constexpr uintptr_t k210Second = 0x70A458;
+    constexpr uintptr_t k211W8First = 0x3683D0;
+    constexpr uintptr_t k211W8Second = 0x368644;
+    constexpr uintptr_t k211W9Third = 0x3685B8;
+    enum class Layout { Unknown, Android210, Android211 };
+    Layout layout = Layout::Unknown;
     constexpr int kCaps[] = { 30, 60, 90, 120 };
     const char* kCapsText[] = { "30 FPS", "60 FPS", "90 FPS", "120 FPS" };
     uintptr_t gameBase = 0;
@@ -58,36 +63,55 @@ namespace {
         if (file) file << fps << "\n";
     }
 
-    // Accept only the original 2.10 instruction or an immediate MOVZ we
-    // previously wrote. Refuse to touch other patchers' unexpected bytes.
-    bool isSupported(uint32_t instruction) {
-        return saenginefps::isKnownInstruction(instruction);
+    // Select a patch layout only after checking *all* its expected
+    // instructions. Unknown/modified versions are never patched.
+    uint32_t readWord(uintptr_t offset) {
+        return *reinterpret_cast<volatile const uint32_t*>(gameBase + offset);
     }
 
-    bool validateGame() {
-        if (gameBase == 0 || aml->GetLibLength("libGTASA.so") < kLimitSite2 + 4) return false;
-        uint32_t first = *reinterpret_cast<volatile uint32_t*>(gameBase + kLimitSite1);
-        uint32_t second = *reinterpret_cast<volatile uint32_t*>(gameBase + kLimitSite2);
-        if (!isSupported(first) || !isSupported(second)) {
-            logger->Error("Unsupported libGTASA.so layout / another FPS patch. No memory changes.");
-            return false;
+    Layout detectLayout() {
+        if (gameBase == 0) return Layout::Unknown;
+        uintptr_t length = aml->GetLibLength("libGTASA.so");
+        if (length > k210Second + sizeof(uint32_t) &&
+                saenginefps::isKnownInstruction(readWord(k210First)) &&
+                saenginefps::isKnownInstruction(readWord(k210Second))) {
+            return Layout::Android210;
         }
-        return true;
+        // Experimental 2.11 branch from public native integration references.
+        // Only accept existing MOVZ W8/W9 instructions at ALL three sites.
+        if (length > k211W8Second + sizeof(uint32_t) &&
+                saenginefps::isKnownW8(readWord(k211W8First)) &&
+                saenginefps::isKnownW8(readWord(k211W8Second)) &&
+                saenginefps::isKnownW9(readWord(k211W9Third))) {
+            return Layout::Android211;
+        }
+        return Layout::Unknown;
     }
 
     bool applyFrameCap(int fps) {
-        if (!validated || !ready) return false;
-        if (!saenginefps::isAllowedFps(fps)) return false;
-        if (!validateGame()) return false;
-
-        // AArch64: MOVZ W9,#fps. Do not overwrite anything until both
-        // patch sites match the expected instruction signature.
-        const uint32_t movz = saenginefps::encodeCapMovz(fps);
-        aml->Unprot(gameBase + kLimitSite1, sizeof(uint32_t));
-        aml->Unprot(gameBase + kLimitSite2, sizeof(uint32_t));
-        aml->Write32(gameBase + kLimitSite1, movz);
-        aml->Write32(gameBase + kLimitSite2, movz);
-        logger->Info("GTA SA Android 2.10 FPS cap set to %d", fps);
+        if (!validated || !ready || !saenginefps::isAllowedFps(fps))
+            return false;
+        if (detectLayout() != layout) {
+            logger->Error("Game executable changed or FPS patch layout unknown; refusing changes.");
+            return false;
+        }
+        if (layout == Layout::Android210) {
+            const uint32_t opcode = saenginefps::encodeCapMovz(fps);
+            aml->Unprot(gameBase + k210First, sizeof(opcode));
+            aml->Unprot(gameBase + k210Second, sizeof(opcode));
+            aml->Write32(gameBase + k210First, opcode);
+            aml->Write32(gameBase + k210Second, opcode);
+        } else if (layout == Layout::Android211) {
+            const uint32_t w8 = saenginefps::encodeCapW8(fps);
+            const uint32_t w9 = saenginefps::encodeCapMovz(fps);
+            aml->Unprot(gameBase + k211W8First, sizeof(w8));
+            aml->Unprot(gameBase + k211W8Second, sizeof(w8));
+            aml->Unprot(gameBase + k211W9Third, sizeof(w9));
+            aml->Write32(gameBase + k211W8First, w8);
+            aml->Write32(gameBase + k211W8Second, w8);
+            aml->Write32(gameBase + k211W9Third, w9);
+        } else return false;
+        logger->Info("GTA SA native ARM64 FPS target set to %d", fps);
         return true;
     }
 
@@ -105,11 +129,17 @@ extern "C" void OnAllModsLoaded() {
     logger->SetTag("SA Engine FPS");
     gameBase = aml->GetLib("libGTASA.so");
     if (!gameBase) {
-        logger->Error("libGTASA.so not loaded; only GTA SA Android 2.10 is supported");
+        logger->Error("libGTASA.so not loaded; requires GTA SA Android ARM64 2.10/2.11");
         return;
     }
-    validated = validateGame();
-    if (!validated) return;
+    layout = detectLayout();
+    validated = layout != Layout::Unknown;
+    if (!validated) {
+        logger->Error("Unsupported GTA SA ARM64 version or unknown patch layout. No memory changes.");
+        return;
+    }
+    logger->Info("Compatible candidate FPS patch sites detected (%s)",
+        layout == Layout::Android210 ? "2.10" : "2.11 experimental");
     ready = true;
 
     aml->MLSGetInt("SAENGINE_FPS_MODE", &selected);

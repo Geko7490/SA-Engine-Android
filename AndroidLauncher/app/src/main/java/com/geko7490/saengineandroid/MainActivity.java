@@ -52,6 +52,8 @@ public final class MainActivity extends Activity {
     private TextView settingsText;
     private TextView engineState;
     private Button engineLaunch;
+    private TextView officialGameState;
+    private Button officialLaunch;
     private boolean importing;
     private int fps;
     private int quality;
@@ -62,8 +64,8 @@ public final class MainActivity extends Activity {
         super.onCreate(state);
         getWindow().setStatusBarColor(BG);
         getWindow().setNavigationBarColor(BG);
-        fps = getPreferences(MODE_PRIVATE).getInt("fps", 60);
-        quality = getPreferences(MODE_PRIVATE).getInt("quality", 1);
+        fps = getSharedPreferences("sa_engine_settings", MODE_PRIVATE).getInt("fps", 60);
+        quality = getSharedPreferences("sa_engine_settings", MODE_PRIVATE).getInt("quality", 1);
         saveSettingsForUnity();
 
         ScrollView scroll = new ScrollView(this);
@@ -76,7 +78,7 @@ public final class MainActivity extends Activity {
         setContentView(scroll);
 
         text("SA ENGINE", 29, PURPLE, true);
-        text("MOBILE  /  0.5 ENGINE LAUNCHER", 13, MUTED, true);
+        text("MOBILE  /  NATIVE FPS PREVIEW", 13, MUTED, true);
         space(18);
 
         LinearLayout stateCard = card();
@@ -85,6 +87,16 @@ public final class MainActivity extends Activity {
         label(stateCard, "GitHub üzerinden Android oyun motoru sürümlerini kontrol et, indir, doğrula ve kur.", 14, MUTED, false);
         action(stateCard, "GITHUB DEPOSUNDAN KUR", () ->
                 startActivity(new Intent(this, PackageCenterActivity.class)), false);
+        space(12);
+
+        LinearLayout originalGameCard = card();
+        label(originalGameCard, "ORİJİNAL GTA SA ANDROID", 14, PURPLE, true);
+        officialGameState = label(originalGameCard, "Oyun kontrol ediliyor...", 16, TEXT, true);
+        label(originalGameCard, "Unity gerekmez. Sahip olduğun GTA SA Android 2.10 ARM64, AML ve SAUtils ile FPS modunu kurup çalıştırabilirsin. Sıradan resmi APK, AML modlarını kendiliğinden yüklemez.", 13, MUTED, false);
+        action(originalGameCard, "NATIVE 30 / 60 / 90 / 120 FPS MODU", () ->
+                startActivity(new Intent(this, PackageCenterActivity.class)), false);
+        officialLaunch = action(originalGameCard, "GTA SA ANDROID'İ AÇ", this::launchOfficialGta, true);
+        updateOfficialStatus();
         space(12);
 
         LinearLayout gameCard = card();
@@ -121,7 +133,7 @@ public final class MainActivity extends Activity {
                 persistSettings();
             }));
         }
-        label(performance, "Ayarlar gelecekte Unity motoru tarafından okunacak. Bu APK oyun içi FPS testi yapmaz.", 12, MUTED, false);
+        label(performance, "AML FPS modunu kurduysan seçtiğin değer modun ayar dosyasına yazılır ve GTA SA yeniden başlatılınca uygulanması hedeflenir. Mod yoksa bu ayar resmi oyunun FPS sınırını değiştirmez.", 12, MUTED, false);
 
         space(12);
         LinearLayout info = card();
@@ -143,6 +155,24 @@ public final class MainActivity extends Activity {
     @Override protected void onResume() {
         super.onResume();
         updateEngineStatus();
+        updateOfficialStatus();
+    }
+
+    private void updateOfficialStatus() {
+        if (officialGameState == null || officialLaunch == null) return;
+        boolean installed = getPackageManager().getLaunchIntentForPackage("com.rockstargames.gtasa") != null;
+        officialGameState.setText(installed ? "Android GTA SA kurulu" : "Android GTA SA bulunamadı");
+        officialLaunch.setEnabled(installed);
+        officialLaunch.setAlpha(installed ? 1f : 0.5f);
+    }
+
+    private void launchOfficialGta() {
+        Intent game = getPackageManager().getLaunchIntentForPackage("com.rockstargames.gtasa");
+        if (game == null) {
+            Toast.makeText(this, "Önce yasal GTA SA Android sürümünü kur", Toast.LENGTH_LONG).show();
+            return;
+        }
+        startActivity(game);
     }
 
     private void updateEngineStatus() {
@@ -230,8 +260,11 @@ public final class MainActivity extends Activity {
     }
 
     private void persistSettings() {
-        getPreferences(MODE_PRIVATE).edit().putInt("fps", fps).putInt("quality", quality).apply();
+        getSharedPreferences("sa_engine_settings", MODE_PRIVATE).edit()
+                .putInt("fps", fps).putInt("quality", quality).apply();
         saveSettingsForUnity();
+        final int requestedFps = fps;
+        worker.execute(() -> NativeFpsModInstaller.updateStoredFps(this, requestedFps));
         refreshSettingsText();
         recreateChoices();
     }

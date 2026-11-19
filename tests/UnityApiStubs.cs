@@ -8,7 +8,7 @@ namespace UnityEngine
 {
     [AttributeUsage(AttributeTargets.Field)] public sealed class SerializeField : Attribute { }
     [AttributeUsage(AttributeTargets.Field)] public sealed class HeaderAttribute : Attribute { public HeaderAttribute(string label) { } }
-    public enum RuntimeInitializeLoadType { AfterSceneLoad }
+    public enum RuntimeInitializeLoadType { BeforeSceneLoad, AfterSceneLoad }
     [AttributeUsage(AttributeTargets.Method)]
     public sealed class RuntimeInitializeOnLoadMethodAttribute : Attribute
     { public RuntimeInitializeOnLoadMethodAttribute(RuntimeInitializeLoadType mode) { } }

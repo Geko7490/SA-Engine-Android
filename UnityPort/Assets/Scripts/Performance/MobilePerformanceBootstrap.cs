@@ -9,9 +9,9 @@ namespace SAEngineAndroid.Performance
         private static void Install()
         {
 #if UNITY_ANDROID && !UNITY_EDITOR
-            if (Object.FindObjectOfType<MobilePerformanceGovernor>() != null) return;
+            if (UnityEngine.Object.FindObjectOfType<MobilePerformanceGovernor>() != null) return;
             var host = new GameObject("SA Android Performance Governor");
-            Object.DontDestroyOnLoad(host);
+            UnityEngine.Object.DontDestroyOnLoad(host);
             host.AddComponent<MobilePerformanceGovernor>();
             host.AddComponent<MobileWorldTuner>();
             host.AddComponent<MobilePerformancePanel>();
